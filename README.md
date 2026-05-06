@@ -6,6 +6,16 @@
 
 [中文版本 / Chinese Version](./README-zh.md)
 
+## 🤖 For AI agents / CLI users
+
+If you're an AI agent (Claude Code, custom agent, scheduler) or building a CLI wrapper, **read [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md) first**. It contains:
+- Natural-language triggers in EN + CN for every tool
+- Exact CLI templates with parameter specs
+- Example utterance → command mappings
+- Multi-tool composite patterns
+
+`INVESTMENT-WORKFLOW.md` tells you *which skill* to pick. `AGENT-TOOL-REFERENCE.md` tells you *exactly how to invoke its scripts*.
+
 ---
 
 ## ⚡ Quick Start (3 minutes)

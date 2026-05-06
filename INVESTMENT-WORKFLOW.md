@@ -1,8 +1,14 @@
 # Investment Skills — Streamlined Workflow
 
-**Version 1.0** | Built 2026-05-04 | Owner: zzizhao
+**Version 1.2** | Built 2026-05-04, last tuned 2026-05-06
 
 This is the master index for the investment analysis skill system. All skills work together — pick the right one for the question.
+
+## 🤖 If you are an AI agent
+
+**Read [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md) first** — it has natural-language → CLI mappings (EN + CN) for every script, with parameter specs and example utterance translations. Use it whenever you need to invoke a tool from a user utterance.
+
+This file (`INVESTMENT-WORKFLOW.md`) tells you *which skill* fits a question. `AGENT-TOOL-REFERENCE.md` tells you *exactly how to call its tools*.
 
 ## 🎯 The Decision Tree
 
