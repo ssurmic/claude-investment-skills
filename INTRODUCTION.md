@@ -79,6 +79,7 @@ This repo is the middle path:
 | `portfolio-audit` | Concentration / factor / Greeks / stress-test review |
 | `tax-optimize` | LTCG vs STCG decision with state-aware math |
 | `review-investment-screenshot` | Quick portfolio review from a screenshot |
+| `price-alert` | Set parameterized price alerts; GitHub Actions + Telegram push (any ticker, any threshold/%). See [SETUP.md](./price-alert/SETUP.md) for one-time bot setup. |
 
 Plus shared scripts (under the hood):
 - `insider_ratio.py` — Form-4-aware insider buy/sell analysis

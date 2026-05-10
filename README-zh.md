@@ -255,6 +255,7 @@ Top 3 未爆发 AI Power 候选:
 | `portfolio-audit` | 完整组合风险审计 | "审一下我的组合"、"减什么仓" |
 | `narrative-reversal-screen` | ORCL 风格反转筛选 | "找 ORCL 那种"、"暴跌反转" |
 | `sector-rotation-analysis` | 板块热力图 + 轮动 | "板块轮动"、"该买哪个板块" |
+| **`price-alert`** | **GitHub Actions + Telegram 价格 alert**（任何标的、任何阈值/百分比）| **"alert me when X hits Y"、"X 跌到 Y 通知我"** —— 见 [setup 指南](./price-alert/SETUP-zh.md) |
 
 加上已有的：
 - `review-investment-screenshot` — 截图组合速读

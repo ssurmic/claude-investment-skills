@@ -78,6 +78,7 @@
 | `portfolio-audit` | 集中度/因子/期权 Greeks/压力测试 |
 | `tax-optimize` | LTCG vs STCG 决策（含州税逻辑） |
 | `review-investment-screenshot` | 截图组合速读 |
+| `price-alert` | 参数化价格 alert，GitHub Actions + Telegram 推送（任何标的、任何阈值/百分比）。一次性 bot 设置见 [SETUP-zh.md](./price-alert/SETUP-zh.md) |
 
 加上底层共享脚本：
 - `insider_ratio.py` — Form 4 代码感知的内部交易分析

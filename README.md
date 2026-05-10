@@ -258,6 +258,7 @@ LEAPS alternative, downside scenario.
 | `portfolio-audit` | Full portfolio risk audit | "review my portfolio", "what to trim" |
 | `narrative-reversal-screen` | ORCL-style reversal screening | "beaten-down with thesis" |
 | `sector-rotation-analysis` | Sector heat map + rotation | "what sector to rotate to" |
+| **`price-alert`** | **GitHub Actions + Telegram price alerts** (any ticker, any threshold/%) | **"alert me when X hits Y", "X 跌到 Y 通知我"** — see [setup guide](./price-alert/SETUP.md) |
 
 Plus existing skills:
 - `review-investment-screenshot` — Quick portfolio review from screenshot
@@ -730,6 +731,7 @@ bash ~/.claude/skills/setup.sh
 - **Master decision tree**: [INVESTMENT-WORKFLOW.md](./INVESTMENT-WORKFLOW.md)
 - **Agent CLI contract**: [AGENT-TOOL-REFERENCE.md](./AGENT-TOOL-REFERENCE.md)
 - **Architecture decisions**: [ARCHITECTURE.md](./ARCHITECTURE.md) — why this repo uses direct APIs + 1 MCP, not 3
+- **Price alerts setup**: [price-alert/SETUP.md](./price-alert/SETUP.md) — one-time Telegram bot + GitHub Secrets walkthrough
 - **Each skill's details**: `[skill-name]/SKILL.md`
 - **Macro framework**: See `analyze-stock/SKILL.md` Year Theme section
 - **Insider methodology**: See `review-investment-screenshot/SKILL.md` (existing)
