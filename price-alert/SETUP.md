@@ -305,16 +305,134 @@ If you make the repo private, GitHub Actions has a 2,000 min/month free limit. P
 
 ---
 
-## Troubleshooting
+## Troubleshooting — issues we hit during real setup
+
+These are the actual problems encountered during the first full-flow setup. Follow this debug sequence if anything breaks.
+
+### 🐛 #1 `getUpdates` returns `{"ok": true, "result": []}` — most common
+
+**Cause**: Your bot hasn't received any messages yet. Telegram's `getUpdates` only returns recent messages sent TO the bot, so until the bot receives at least one message, the result array is empty.
+
+**Symptoms**:
+```json
+{"ok": true, "result": []}
+```
+
+**Fix** (30 seconds):
+1. Open Telegram → search for **your bot's username** (e.g. `@DuckyduckyTradeBot`)
+2. Tap the bot, then tap the blue **START** button (or send `/start`)
+3. Send any text message (e.g. `hello`)
+4. **Refresh** the `getUpdates` URL — now `result` should have entries
+
+**Why this trips people up**: The Telegram docs assume you've already been chatting with the bot. The very first setup has nothing to fetch.
+
+---
+
+### 🐛 #2 `chat.id` vs `from.id` confusion
+
+The JSON response has TWO `id` fields:
+
+```json
+"message": {
+  "from": {"id": 1435438296, ...},   ← user's user_id (sender)
+  "chat": {"id": 1435438296, ...}    ← chat_id ← USE THIS ONE
+}
+```
+
+For **private chats** they happen to be equal. For **group/channel chats** they differ — `from.id` is the sender's user_id, `chat.id` is the chat the bot lives in.
+
+**Rule**: Always use `chat.id`. It's the canonical answer regardless of chat type.
+
+**Group chats**: `chat.id` will be NEGATIVE (e.g. `-1001234567890`). That negative sign is part of the value — keep it.
+
+---
+
+### 🐛 #3 Leaked your token by mistake?
+
+Tokens can leak via screenshots, chat messages, terminal scrollback, git commits, paste bins. If yours appears anywhere outside `.env` + GitHub Secrets:
+
+1. Telegram → @BotFather → `/mybots` → select your bot → **API Token** → **Revoke current token**
+2. BotFather instantly issues a new token; the old one becomes invalid
+3. Update both your local `.env` AND GitHub repo Secrets with the new value
+
+**Prevention rules**:
+- Never paste a token into a chat (including AI chats — the conversation may be exported)
+- Never screenshot the token area of BotFather; if you do, immediately revoke after
+- `git status` before every commit; verify `.env` is NOT listed
+- `git -C ~/.claude/skills check-ignore -v price-alert/.env` should return a `.gitignore` line — that confirms gitignore is working
+
+---
+
+### 🐛 #4 `.env` vs `.env.example` — what to commit?
+
+| File | Status | What's in it |
+|---|---|---|
+| `.env.example` | ✅ **committed** to git | template with `PASTE_YOUR_TOKEN_HERE` placeholders |
+| `.env` | ❌ **gitignored**, never committed | YOUR real token + chat_id |
+
+Workflow:
+```bash
+cp .env.example .env       # one-time setup: copy template
+# edit .env with your real values
+# .env is now ignored — git status won't show it
+```
+
+Verify it's ignored:
+```bash
+git -C ~/.claude/skills check-ignore -v price-alert/.env
+# Expected: ".gitignore:35:.env\tprice-alert/.env"
+```
+
+If `check-ignore` returns nothing or shows the file in `git status` as untracked, **something is wrong** — fix gitignore before any commit.
+
+---
+
+### 🐛 #5 Workflow fails with "TELEGRAM_BOT_TOKEN not set"
+
+The script ran but Telegram credentials weren't found. Two paths:
+
+- **Local run**: `.env` file missing or in wrong location. Should be at `price-alert/.env` (same level as `SKILL.md`).
+- **GitHub Actions run**: Repo Secrets weren't added or named wrong. Names must be EXACTLY `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` (case-sensitive, no leading/trailing spaces).
+
+Quick verify locally:
+```bash
+cd ~/.claude/skills/price-alert
+python -c "
+import os, sys
+sys.path.insert(0, 'scripts')
+from check_alerts import _load_dotenv
+from pathlib import Path
+_load_dotenv(Path('.env'))
+print('TOKEN set:', bool(os.environ.get('TELEGRAM_BOT_TOKEN')))
+print('CHAT set: ', bool(os.environ.get('TELEGRAM_CHAT_ID')))
+"
+```
+
+---
+
+### 🐛 #6 Telegram says "chat not found"
+
+Two possible causes:
+
+1. **Wrong chat_id** — re-do the `getUpdates` flow above; copy the `chat.id` value exactly (preserve the negative sign for group chats).
+2. **You never tapped Start on the bot** — even with the right chat_id, the bot can't initiate conversation. The user must start the chat first.
+
+Smoke test with browser URL:
+```
+https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAT_ID>&text=test
+```
+Returns `{"ok":true,...}` → working. Returns `{"ok":false,"description":"chat not found"}` → fix above.
+
+---
+
+### 🐛 #7 Other workflow misfires
 
 | Symptom | Fix |
 |---|---|
-| Workflow fails with "TELEGRAM_BOT_TOKEN not set" | Secrets weren't added; redo Part 2 |
-| Workflow runs but no Telegram message | Test with the smoke-test URL from 1.5 — confirms token+chat_id are correct |
-| `getUpdates` returns empty array `"result": []` | Send a message to your bot first, then refetch |
-| Telegram says "chat not found" | Wrong chat_id, OR you never tapped Start on the bot |
-| Cron doesn't fire on schedule | GitHub schedules can be delayed up to 15 min on busy hours; verify by checking Actions log timestamp |
-| Alert fires but stays fired forever | By design — `cancel_alert.py <id> --rearm` to re-arm |
+| Workflow runs but no Telegram message | Smoke-test the URL above first; isolates whether problem is bot creds or check_alerts.py |
+| Cron doesn't fire on schedule | GitHub schedules can be delayed up to ~15 min during peak hours; check Actions log timestamps |
+| Alert fires but stays fired forever | By design — `python cancel_alert.py <id> --rearm` to re-arm an alert after it triggered |
+| `add_alert.py` succeeded but Actions doesn't pick it up | You forgot to commit + push `alerts.json` after running add_alert.py |
 
 ---
 

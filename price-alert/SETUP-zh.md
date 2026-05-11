@@ -306,16 +306,134 @@ on:
 
 ---
 
-## 故障排查
+## 故障排查 —— 真实 setup 中遇到的坑
+
+这些都是第一次走完整流程时遇到的真问题。任何一步崩了就来这里查。
+
+### 🐛 #1 `getUpdates` 返回 `{"ok": true, "result": []}` —— 最常见
+
+**原因**: 你的 bot 还没收到过任何消息。Telegram 的 `getUpdates` 只返回**发给 bot 的最近消息**，所以 bot 一条消息都没收到时 result 数组就是空的。
+
+**现象**:
+```json
+{"ok": true, "result": []}
+```
+
+**修复**（30 秒）:
+1. 打开 Telegram → 搜索**你的 bot username**（比如 `@DuckyduckyTradeBot`）
+2. 点进 bot，**点蓝色 START 按钮**（或者发 `/start`）
+3. **再发任意一条消息**（比如 `hello`）
+4. **刷新** `getUpdates` URL —— 现在 result 应该有内容了
+
+**为什么这一步坑人**: Telegram 文档默认你已经在跟 bot 聊天。第一次 setup 时根本没东西可拿。
+
+---
+
+### 🐛 #2 `chat.id` vs `from.id` 容易搞混
+
+JSON 返回里有**两个** `id` 字段：
+
+```json
+"message": {
+  "from": {"id": 1435438296, ...},   ← 发送者的 user_id
+  "chat": {"id": 1435438296, ...}    ← chat_id ← 用这个
+}
+```
+
+**私聊**它俩相等。**群聊/频道**它俩不同 —— `from.id` 是发送者，`chat.id` 是 bot 所在聊天。
+
+**规则**: 永远用 `chat.id`。任何聊天类型都是正确答案。
+
+**群聊**: `chat.id` 是**负数**（比如 `-1001234567890`）。负号是值的一部分，**别漏掉**。
+
+---
+
+### 🐛 #3 不小心泄露了 token？
+
+Token 可能通过截图、聊天、终端 scrollback、git commit、剪贴板等泄露。如果它出现在 `.env` + GitHub Secrets 之外的任何地方：
+
+1. Telegram → @BotFather → `/mybots` → 选你的 bot → **API Token** → **Revoke current token**
+2. BotFather 立刻给你新 token，旧的瞬间失效
+3. 同时更新本地 `.env` **和** GitHub repo Secrets
+
+**预防规则**:
+- 永远不要把 token 粘到任何聊天里（包括 AI 聊天 —— 对话可能被 export）
+- 永远不要截图 BotFather 的 token 区域；万一截图了，立刻 revoke
+- 每次 commit 前 `git status`，确认 `.env` 不在列表里
+- `git -C ~/.claude/skills check-ignore -v price-alert/.env` 应该返回 `.gitignore` 行 —— 这确认 gitignore 工作中
+
+---
+
+### 🐛 #4 `.env` vs `.env.example` —— 哪个 commit？
+
+| 文件 | 状态 | 内容 |
+|---|---|---|
+| `.env.example` | ✅ **committed** 到 git | 模板，含 `PASTE_YOUR_TOKEN_HERE` 占位符 |
+| `.env` | ❌ **gitignored**, 永不 commit | 你的真实 token + chat_id |
+
+工作流:
+```bash
+cp .env.example .env       # 一次性: 复制模板
+# 编辑 .env 填真实值
+# .env 现在被忽略 —— git status 不会显示
+```
+
+验证已被忽略:
+```bash
+git -C ~/.claude/skills check-ignore -v price-alert/.env
+# 期望: ".gitignore:35:.env\tprice-alert/.env"
+```
+
+如果 `check-ignore` 没输出，或 `git status` 把它显示为 untracked，**就是有问题** —— commit 前先修 gitignore。
+
+---
+
+### 🐛 #5 Workflow 报错 "TELEGRAM_BOT_TOKEN not set"
+
+脚本跑了但找不到 Telegram 凭证。两条路径：
+
+- **本地跑**: `.env` 文件缺失或位置错。应该在 `price-alert/.env`（跟 `SKILL.md` 同级）
+- **GitHub Actions 跑**: Repo Secrets 没加或名字错。名字必须**精确**为 `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID`（大小写敏感、没前后空格）
+
+本地快速验证:
+```bash
+cd ~/.claude/skills/price-alert
+python -c "
+import os, sys
+sys.path.insert(0, 'scripts')
+from check_alerts import _load_dotenv
+from pathlib import Path
+_load_dotenv(Path('.env'))
+print('TOKEN set:', bool(os.environ.get('TELEGRAM_BOT_TOKEN')))
+print('CHAT set: ', bool(os.environ.get('TELEGRAM_CHAT_ID')))
+"
+```
+
+---
+
+### 🐛 #6 Telegram 报 "chat not found"
+
+两种可能：
+
+1. **chat_id 错** —— 重做上面的 `getUpdates` 流程；精确复制 `chat.id` 值（群聊保留负号）
+2. **你没点过 bot 的 Start** —— 即使 chat_id 对，bot 也不能主动发起对话。必须用户先开启聊天
+
+浏览器 URL 烟雾测试:
+```
+https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAT_ID>&text=test
+```
+返回 `{"ok":true,...}` → 正常。返回 `{"ok":false,"description":"chat not found"}` → 按上面修。
+
+---
+
+### 🐛 #7 其他 workflow 误动作
 
 | 现象 | 解决 |
 |---|---|
-| Workflow 报错 "TELEGRAM_BOT_TOKEN not set" | Secrets 没加，重做 Part 2 |
-| Workflow 跑了但没 Telegram 消息 | 用 1.5 烟雾测试 URL 验证 token+chat_id 对不对 |
-| `getUpdates` 返回空 `"result": []` | 先发条消息给 bot，再 refetch |
-| Telegram 报 "chat not found" | chat_id 不对，或者你没点过 bot 的 Start |
-| Cron 没按时跑 | GitHub 高峰时段可能延迟 15 分钟，看 Actions log 时间戳验证 |
-| Alert 触发了但状态卡死 | 设计如此 —— `cancel_alert.py <id> --rearm` 重置 |
+| Workflow 跑了但没 Telegram 消息 | 先用上面 URL 烟雾测试 —— 隔离是 bot 凭证问题还是 check_alerts.py 问题 |
+| Cron 没按时跑 | GitHub 高峰时段可能延迟 ~15 分钟，看 Actions log 时间戳 |
+| Alert 触发了但状态卡死 | 设计如此 —— `python cancel_alert.py <id> --rearm` 重置 |
+| `add_alert.py` 成功但 Actions 没识别 | 你忘了跑完 add_alert.py 后 commit + push `alerts.json` |
 
 ---
 
