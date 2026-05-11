@@ -5,6 +5,23 @@ description: Screens for "narrative reversal" candidates — stocks down 30%+ fr
 
 # Narrative Reversal Screen — Buy The Beaten Down
 
+## 🔍 Pre-flight checklist — reversals fail spectacularly in the wrong regime
+
+A "down 50% with intact catalyst" looks like value until the broader market sells off another 20% and your "value" becomes -70%. Required checks:
+
+1. **Macro regime gate** — trigger `macro-warning`. Reversals work in 🟢 GREEN (recovering market lifts beaten-down names) and **mid-late 🟡 YELLOW** (capitulation phase). 🔴 RED → reversals are still falling knives. Don't recommend reversal buys in RED; flag as "watch list only" instead.
+2. **Insider must be slowing sells or starting to buy** — `~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py TICKER --window 180` (180d for reversals — see the trend over 2 quarters, not just 90d). The ORCL signal was: pre-crash 8 sells / 2 buys → post-crash 2 sells / 5 buys. Form 4 code "P" only.
+3. **First higher low CONFIRMED, not predicted** — Don't pre-empt. Wait for: (a) 50DMA crossover OR (b) confirmed higher low on weekly. Pre-empting "looks bottomed" is how -30% becomes -50%.
+4. **3-tier entry** — T1 = first confirmed higher low; T2 = retest of capitulation low; T3 = full revisit (if it happens). Never "buy at market on a chart that looks bottomed."
+5. **Sizing 2-3% per pick** — reversals are higher-risk than momentum names; don't size like core holdings.
+6. **Tax framing** — reversal entries are positions, not swings; assume 12+ month hold. Frame return targets after-tax: +50% gross = +40-43% after LTCG.
+
+**"Look carefully" rule**: most "beaten-down with intact catalyst" stocks are beaten down for a REASON the bull case denies. Always answer: "what would have to be true for the bear thesis to be correct?" If you can't articulate it, you don't understand the trade. Verified false reversals from 2026: WBA -60% (mgmt still selling), DLTR -45% (insiders also exited), KSS -50% (PE walked away).
+
+See [README's Hard Rules](../README.md#%EF%B8%8F-hard-rules-never-violate) for the full anti-pattern list.
+
+---
+
 ## Goal
 
 Find stocks where:

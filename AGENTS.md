@@ -25,7 +25,7 @@ This file is the canonical agent guide. Codex looks for `AGENTS.md`, Claude Code
 
 **Rule of thumb**: this file tells you *what to do*; the linked SETUP docs are the *exact button-by-button details*. Follow this file's flow, but when a step says "do Part 3 of SETUP-WEBHOOK.md", open that section and walk the user through verbatim.
 
-**Note on AGENT-TOOL-REFERENCE.md**: it currently covers the 5 analysis tools + the `macro-warning` skill. It does **not yet** cover `price-alert` NL → command mapping — for now, refer users to [`price-alert/EXAMPLES.md`](./price-alert/EXAMPLES.md) for chat phrasings and [`price-alert/SKILL.md`](./price-alert/SKILL.md) for the decision tree.
+**`AGENT-TOOL-REFERENCE.md` coverage**: 6 CLI tools (`insider_ratio.py`, `cluster_buy_scan.py`, `quote_pull.py`, `option_walls.py`, `max_pain.py`, `price-alert/` suite) + a Skill Catalog mapping all 13 NL-only skills (analyze-stock, earnings-prep, find-alpha, leaps-screen, etc.) to their bilingual trigger phrases. Read its Skill Catalog section after setup so you know what NL utterances map to which skill.
 
 ---
 

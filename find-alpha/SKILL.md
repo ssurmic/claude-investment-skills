@@ -11,6 +11,28 @@ description: Find alpha across 3 time horizons (1-3 week swing, 1-3 month positi
 
 ---
 
+## 🔍 Pre-flight checklist — run BEFORE returning any candidate
+
+Discovery is the easy half. Execution discipline is where alpha leaks. Every candidate output MUST pass:
+
+1. **Macro regime gate** — trigger `macro-warning` skill first. Regime determines which horizons to run:
+   - 🟢 GREEN: all 3 horizons (swing + position + LEAPS)
+   - 🟡 YELLOW: position + LEAPS only (skip swing — chop kills swings)
+   - 🔴 RED: LEAPS only at deep value, no swing/position adds. Output should default to "no swings/positions this week" in RED.
+2. **Insider strict per candidate** — already in Hard Rules #1 below. Don't bend it for a "great story."
+3. **3-tier entry MANDATORY per candidate** — output "Entry: $X" alone is insufficient. Must be T1 (trigger) / T2 (50DMA or 20% drawdown) / T3 (200DMA or 38% drawdown). User should never have to ask "but at what price specifically?"
+4. **Position size capped per horizon** (already defined in horizons below — enforce strictly):
+   - Swing: 1-2% per pick · Position: 2-4% · LEAPS: 3-5%
+   - High-beta total book ≤ 50%.
+5. **Tax flag for Swing horizon** — Swing = 1-3 weeks = STCG when exited. If user is in high bracket, surface that explicitly in output ("STCG ~30% federal — net win must clear that").
+6. **No "speculative" hidden in confidence** — If thesis is unverified, label "🟡 SPECULATIVE" in confidence column. Don't bundle speculation into 8/10 ratings.
+
+**"Look carefully" rule**: blacklisted names (APH, EME, ETN, PWR, POWL, GEV) and similar distribution-at-top patterns return via news cycles. Always re-verify with `insider_ratio.py`, don't trust the cached blacklist as the only filter. New distribution patterns appear; refresh the blacklist quarterly.
+
+See [README's Hard Rules](../README.md#%EF%B8%8F-hard-rules-never-violate) for the full anti-pattern list.
+
+---
+
 ## When to invoke
 
 - User asks: "find alpha", "find me 3 tickers", "what's the next MRVL setup", "screen swing trades", "weekly alpha scan"
@@ -93,23 +115,31 @@ description: Find alpha across 3 time horizons (1-3 week swing, 1-3 month positi
 ```
 # Alpha Scan — [DATE]
 
-## 🎯 Top 3 SWING (1-3 weeks)
-| Rank | Ticker | Thesis (1 line) | Entry | Stop | Target | Confidence |
-| 1 | XXX | ... | $X | $X | $X | 8/10 |
+## 📊 Macro regime (gate — drives which horizons output)
+🟢/🟡/🔴 — [1-line: composite score, sectors hot/cold, regime call]
+[If 🔴 → "Only LEAPS horizon below. Swing/Position disabled this scan."]
 
-[For each: 2-paragraph deep dive]
+## 🎯 Top 3 SWING (1-3 weeks) — [SKIP if regime != 🟢]
+| Rank | Ticker | Thesis (1 line) | T1 | T2 | T3 | Stop | Target | Size | Confidence |
+| 1 | XXX | ... | $X | $X | $X | $X | $X | 1.5% | 8/10 |
 
-## 🎯 Top 3 POSITION (1-3 months)
-[Same structure]
+Where T1=trigger, T2=50DMA or -20%, T3=200DMA or -38%. ⚠️ STCG warning: 1-3 week swing = short-term cap gains when exited.
+
+[For each: 2-paragraph deep dive. Must explicitly call out macro regime + insider verification.]
+
+## 🎯 Top 3 POSITION (1-3 months) — [SKIP if regime == 🔴]
+[Same structure with T1/T2/T3, size 2-4%]
 
 ## 🎯 Top 3 LEAPS (6-12+ months)
-[Same structure]
+[Same structure with T1/T2/T3 for underlying, size 3-5%, mention dec 2027 vs jan 2028 expiry choice]
 
 ## ⚠️ Disqualified candidates
-[Names that came up in scan but failed insider_ratio strict check]
+[Names that came up in scan but failed insider_ratio strict check. Include WHY (e.g. "INTC: 4 sells, 0 buys 90d", "PLTR: Karp Rule 10b5-1 vesting only — looks like buy but isn't").]
 
-## 📊 Macro context for the week
-[1 paragraph: regime, CTA flows, key events]
+## 🧮 Sizing summary
+- Current high-beta book exposure: X% (cap 50%)
+- This scan's adds if all accepted: +Y%
+- Post-add high-beta: Z% [warn if > 50%]
 ```
 
 ---

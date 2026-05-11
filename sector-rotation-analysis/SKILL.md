@@ -5,6 +5,25 @@ description: Top-down sector heat map across 11 GICS sectors + AI sub-sectors (G
 
 # Sector Rotation Analysis — Where Money Is Going
 
+## 🔍 Pre-flight checklist — rotation creates tax + sizing events that need accounting
+
+Rotation = realize gains in one sector, buy in another. Both halves have execution cost. Required checks:
+
+1. **Macro regime first** — trigger `macro-warning`. Regime determines rotation type:
+   - 🟢 GREEN: aggressive rotation OK (sell hot to buy cheap)
+   - 🟡 YELLOW: defensive rotation only (sell high-beta to buy staples/utilities)
+   - 🔴 RED: don't rotate INTO new sectors — rotate TO CASH. Then redeploy at lower prices.
+2. **Tax on the trim leg** — every rotation pair has a "sell X" half. Run `tax-optimize` on it. If held < 12 months → STCG ~25-37% federal. Often a rotation that's +5% net pre-tax is breakeven or negative post-tax. **Always state the post-tax expected delta**, not just the pre-tax sector spread.
+3. **Sizing per sector after rotation** — ≤ 30% in any single sector (even Tech). Document current sector weights BEFORE recommending. If user is already 40% Tech, don't recommend adding more Tech sub-sector even if signal is green.
+4. **Sub-sector concentration within rotation** — "rotate from Tech to Energy" doesn't mean "buy XOM at any price." Each leg needs analyze-stock-level analysis.
+5. **3-tier entry on the add leg** — Don't rotate at market. T1 = trigger, T2 = 50DMA, T3 = 200DMA on the destination sector ETF or stock.
+
+**"Look carefully" rule**: sector ETFs hide concentration. XLK is 23% AAPL + 18% NVDA + 9% MSFT — buying XLK on a "Tech rotation" is concentrated, not diversified. Always check top-5 holdings of any sector ETF before recommending it as a rotation vehicle.
+
+See [README's Hard Rules](../README.md#%EF%B8%8F-hard-rules-never-violate) for the full anti-pattern list.
+
+---
+
 ## Goal
 
 Help user **rotate from overheated to undervalued sectors** while staying in the broader market. Never just "all-in" on one sector. Every quarter, identify:

@@ -117,9 +117,21 @@ To trigger manually for testing: GitHub repo → Actions tab → "Price Alert Ch
 
 ## When NOT to use this skill
 
-- **Intraday scalping**: 15-min granularity is too coarse. Use a real broker alert.
+- **Intraday scalping**: 2-min granularity is too coarse. Use a real broker alert.
 - **Composite conditions** (e.g., "GLW < 140 AND VIX > 25"): not supported by current schema. Set two alerts and use your judgment.
 - **Crypto / non-US tickers**: not tested. yfinance support varies.
+
+## ⚠️ Alert fired — what to do BEFORE adding
+
+A fired alert is a **trigger to research**, not a buy signal. When the user receives an alert and asks "should I add now":
+
+1. **Run `analyze-stock TICKER`** — has the bull thesis changed since the alert was set? Fresh insider check, valuation, catalysts.
+2. **Trigger `macro-warning`** — if regime flipped to 🔴 RED between alert-set and alert-fire, the entry price you wanted is no longer the entry price you want.
+3. **Verify the 3-tier plan** — the alert price was T1. If T1 hit because of macro selloff (not stock-specific), T2 and T3 likely follow. Pre-commit to tier sizes now.
+4. **Position-size check** — if adding pushes the position above 10% of book, scale the add down.
+5. **Insider strict 30d** — `insider_ratio.py TICKER --window 30` — catch any pre-alert C-suite distribution that explains the drop.
+
+**"Look carefully" rule**: alerts fire because of price moves; price moves often have a REASON. Don't add without finding the reason. If you can't articulate why the stock dropped to your alert price, you don't yet understand whether the bull thesis is intact.
 
 ## Verification
 

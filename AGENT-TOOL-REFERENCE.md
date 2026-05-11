@@ -25,6 +25,8 @@ If the utterance is in a language other than EN/CN, mentally translate to the ca
 
 ## Quick Lookup Table
 
+### Direct CLI tools (Tools 1-6)
+
 | Intent (canonical EN) | Bilingual triggers | Tool |
 |---|---|---|
 | **Daily macro warning / pullback radar** | EN: "macro warning / regime check / is the market at peak / should I take profits" · CN: "宏观警报 / 市场是不是顶了 / 该不该减仓 / regime 怎么样" | **`macro-warning` skill (batch-friendly)** |
@@ -33,6 +35,25 @@ If the utterance is in a language other than EN/CN, mentally translate to the ca
 | Live quotes + moving averages | EN: "quote X / price of X / where is X trading" · CN: "X 现在多少 / X 报价 / X 价格" | `quote_pull.py` |
 | Option walls / OI clusters | EN: "option walls X / where will X pin / gamma map X" · CN: "X 期权墙 / X 期权磁吸位" | `option_walls.py` |
 | Max pain calculation | EN: "max pain X / pin level X" · CN: "X 的 max pain / X OPEX 目标" | `max_pain.py` |
+| **Price alerts (add/list/cancel)** | EN: "alert me when X hits Y / notify if X drops Z% / list my alerts" · CN: "X 跌到 Y 通知我 / 我的 alerts / 取消 X" | **`price-alert/` suite (Tool 6)** |
+
+### NL-only skills (Claude Code matches via SKILL.md description)
+
+| Intent | Bilingual triggers | Skill |
+|---|---|---|
+| Single-stock deep dive | EN: "analyze X / is X a buy / deep dive on X" · CN: "分析 X / X 怎么样 / X 能买吗" | `analyze-stock` |
+| Pre-earnings decision | EN: "earnings prep X / should I hold X through earnings" · CN: "X 财报前怎么看 / X implied move" | `earnings-prep` |
+| 3-horizon discovery | EN: "find alpha / weekly alpha scan" · CN: "找 alpha / 本周 alpha 扫一下" | `find-alpha` |
+| LEAPS strike selection | EN: "LEAPS for X / stock or LEAPS for X" · CN: "X 买什么 LEAPS / X 的长期 call" | `leaps-screen` |
+| Theme-laggard hunt | EN: "find untapped X / next NOK" · CN: "找未爆发的 X / 下一个 NOK" | `find-untapped-thesis` |
+| Reversal screen | EN: "find reversal plays / beaten-down with thesis" · CN: "找暴跌反转股 / ORCL 那种反转" | `narrative-reversal-screen` |
+| Sector rotation | EN: "sector rotation / what sector to add" · CN: "板块轮动 / 该买哪个板块" | `sector-rotation-analysis` |
+| Portfolio risk audit | EN: "review my portfolio / what should I trim" · CN: "审一下我的组合 / 该减什么仓" | `portfolio-audit` |
+| Tax-aware trim decision | EN: "should I sell X for tax / LTCG vs STCG on X" · CN: "X 减仓税务 / X 减仓最省税" | `tax-optimize` |
+| Macro news-driven | EN: "macro check / risk on or off" · CN: "看一下宏观 / 市场风险怎么样" | `macro-risk-check` |
+| Screenshot portfolio review | (paste image + "review") · (发截图 + "看一下") | `review-investment-screenshot` |
+
+Detailed triggers + entry rules for the NL skills are in the [**Skill Catalog**](#skill-catalog--nl-only-skills-not-cli-tools) section below.
 
 ---
 
@@ -353,6 +374,107 @@ quote_pull.py "X" &                    # current price + MAs
 wait
 # Then WebSearch for consensus + implied move
 ```
+
+---
+
+## Tool 6: `price-alert/` suite — alert management
+
+Adds/lists/cancels parameterized price alerts. Backed by GitHub Actions cron scanner + Telegram push. Two interaction modes — pick by context:
+
+### Mode A: User talks to Claude Code directly (CLI scripts on local)
+
+```bash
+# Add
+uv run --with yfinance python ~/.claude/skills/price-alert/scripts/add_alert.py TICKER OP VALUE [--note "..."]
+#  OP = below | above | drop | rise | drop_intraday | rise_intraday | below_ma_50 | above_ma_50 | below_ma_200 | above_ma_200
+
+# List
+python ~/.claude/skills/price-alert/scripts/list_alerts.py [--active | --all | --fired]
+
+# Cancel
+python ~/.claude/skills/price-alert/scripts/cancel_alert.py TARGET [--rearm]
+# TARGET = ticker, alert id, or "ALL"
+```
+
+After any add/cancel, **commit + push `alerts.json`** so GitHub Actions sees the change.
+
+### Mode B: User texts the Telegram bot (no local CLI)
+
+The user just sends NL to their `@<name>_bot`. The chat path (polling `chat_handler.py` or webhook `worker.ts`) parses with Claude Sonnet 4.6 + tool use and modifies `alerts.json` directly via GitHub Contents API. **No CLI invocation from the agent's side** — the user's message is the API.
+
+If the user is asking the *Claude Code agent* (not the bot) to set an alert "for me", use Mode A. If they're asking how to set alerts from their phone, point them to Mode B examples in [`price-alert/EXAMPLES.md`](./price-alert/EXAMPLES.md).
+
+### Triggers (natural language)
+
+**English**: "alert me when X hits Y", "notify me if X drops Z%", "set a price alert", "watch X at Y", "alert if X breaks 50DMA", "list my alerts", "cancel X alert", "show fired alerts"
+
+**Chinese**: "X 跌到 Y 通知我", "X 涨到 Y 提醒", "设个 alert", "盯一下 X", "X 跌破 50DMA 提醒我", "列出我的 alert", "取消 X", "我的 alerts"
+
+### Common pattern mappings
+
+| Utterance | Tool call (Mode A) |
+|---|---|
+| "alert me when GLW hits $140" | `add_alert.py GLW below 140` |
+| "notify me if NVDA drops 10%" | `add_alert.py NVDA drop 10` |
+| "alert if AMD drops 5% in one day" | `add_alert.py AMD drop_intraday 5` |
+| "VST 跌破 50DMA 提醒我" | `add_alert.py VST below_ma_50 0` |
+| "watch SPY at $500, with note 'macro flip warning'" | `add_alert.py SPY below 500 --note "macro flip warning"` |
+| "list my alerts" / "我的 alerts" | `list_alerts.py --active` |
+| "cancel GLW" / "取消 GLW" | `cancel_alert.py GLW` |
+| "re-arm the GLW alert that fired yesterday" | `cancel_alert.py <id> --rearm` |
+
+### Compound conditions
+
+Schema doesn't support AND/OR within one alert. Decompose **OR** into multiple alerts ("X below 140 OR X drops 5% intraday" → 2 `add_alert.py` calls). **AND** is not supported — user gets two alerts and decides themselves.
+
+### Hard rules
+
+1. **Alerts are triggers to research, not buy signals.** When an alert fires and the user asks "should I add?", run `analyze-stock` + `macro-warning` + insider 30d before answering. See [`price-alert/SKILL.md`](./price-alert/SKILL.md) "Alert fired — what to do BEFORE adding" for the full checklist.
+2. **Always include `--note` when context is meaningful.** It shows in the Telegram message and helps the user remember why they set it weeks later. ("AI glass tier 1 entry", "macro flip warning", etc.)
+3. **Don't auto-add alerts during `analyze-stock`** unless the user explicitly asks. Suggest them, but let user confirm.
+
+---
+
+## Skill Catalog — NL-only skills (not CLI tools)
+
+The 5 Tools above (and Tool 6) are direct script invocations. The skills below are **pure NL skills** triggered by Claude Code's matching against `description:` fields in each SKILL.md. There's no separate CLI command — Claude Code loads the SKILL.md and follows its instructions.
+
+When a user utterance matches one of these, the agent should: (1) confirm the skill name, (2) gather any obvious parameters from the utterance, (3) let Claude Code load and execute the skill — don't try to manually run the workflow steps.
+
+### Quick triggers
+
+| Skill | EN triggers | CN triggers | When the agent invokes it |
+|---|---|---|---|
+| `analyze-stock` | "analyze X", "is X a buy", "deep dive on X", "research X" | "分析一下 X", "X 怎么样", "X 能买吗", "深度看 X", "调研 X" | Single-stock decision; user wants the 10-step framework |
+| `macro-risk-check` | "macro check", "regime read", "risk on/off", "is the market safe" | "看一下宏观", "市场风险", "现在能加仓吗" | News-driven daily macro (less batch-friendly than macro-warning) |
+| `find-untapped-thesis` | "find me the next X", "what's undervalued in Y theme", "find untapped Z plays" | "找未爆发的 X 股", "Y 板块还有什么便宜的", "找下一个 NOK" | Theme-based screening for laggards |
+| `narrative-reversal-screen` | "find reversal plays", "stocks at bottom that can recover", "beaten-down with thesis" | "找暴跌反转股", "ORCL 那种反转", "底部反弹候选" | Capitulation-then-recovery setups (ORCL pattern) |
+| `sector-rotation-analysis` | "sector rotation", "what sector to add", "am I too tech heavy" | "板块轮动", "该买哪个板块", "我是不是 tech 太重" | 11-sector heatmap + rotation pairs |
+| `earnings-prep` | "X reports tomorrow", "should I hold X through earnings", "earnings prep for X", "what's priced in for X" | "X 财报前怎么看", "X 财报应该减仓吗", "X implied move", "X 财报前分析" | Pre-earnings decision: implied move + scenarios + position action |
+| `leaps-screen` | "LEAPS for X", "what call should I buy on X", "stock or LEAPS for X", "long-term options X" | "X 买什么 LEAPS", "X 的长期 call", "X 现货还是期权", "X 2027 call 推荐" | Long-dated options strike selection with payoff math |
+| `option-wall-analysis` | "max pain on X", "option walls X", "where will X pin", "gamma map X" | "X 的 max pain", "X 期权墙", "X 期权磁吸位", "X 这周走哪里" | Short-term (≤4 weeks) levels for stocks with active options |
+| `portfolio-audit` | "review my portfolio", "audit my book", "am I too concentrated", "what should I trim" | "审一下我的组合", "我组合风险大吗", "该减什么仓" | Full risk review from positions list or screenshot |
+| `tax-optimize` | "should I sell X for tax", "tax on selling X", "LTCG vs STCG on X" | "X 减仓税务", "现在卖还是等长期", "X 减仓最省税" | LTCG vs STCG decision with state-aware math |
+| `price-alert` | (covered as Tool 6 above) | (covered as Tool 6 above) | Set parameterized price/MA alerts via cron + Telegram |
+| `review-investment-screenshot` | (paste portfolio screenshot + "review") | (发组合截图 + "看一下") | Quick portfolio review from a screenshot |
+| `find-alpha` | "find alpha", "weekly alpha scan", "find me 3 swing trades", "what's the next MRVL" | "找 alpha", "本周 alpha 扫一下", "找下一个 MRVL" | 3-horizon (swing/position/LEAPS) discovery, weekly cadence |
+
+### Pre-flight discipline (all skills above enforce this)
+
+Every skill that recommends a buy/add/trim runs the same Pre-flight checklist (codified in each SKILL.md):
+
+1. **Macro regime** (trigger `macro-warning`)
+2. **Insider strict** (`insider_ratio.py --window 90`)
+3. **Valuation** (Forward P/E vs sector median)
+4. **3-tier entry** (T1 / T2 / T3, never "buy at market")
+5. **Sizing** (≤ 10% single, ≤ 50% high-beta total)
+6. **Tax** (run `tax-optimize` if trim < 12mo)
+
+If a skill's output skips any layer, the agent should flag it and request a redo. The user's methodology is "macro → stock → entry → sizing → tax" — every recommendation must touch all 5.
+
+### "Look carefully" rule (applies across all skills)
+
+The single most common failure mode is the agent giving a fast generic answer because the user asked casually. The user's preference is **brutal honesty with explicit numbers** (% allocation, $ P&L impact, post-tax delta). When in doubt, slow down and run the checklist — the user prefers a slower correct answer over a fast surface-level one. This is codified in user memory and in each SKILL.md.
 
 ---
 

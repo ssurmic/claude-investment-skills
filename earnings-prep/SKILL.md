@@ -5,6 +5,23 @@ description: Pre-earnings analysis: pulls consensus, implied move from ATM strad
 
 # Earnings Prep — Pre-Earnings Decision Framework
 
+## 🔍 Pre-flight checklist — run BEFORE building scenarios or making recommendations
+
+Earnings reactions are ±8-20%. That's not where to skip the discipline layers.
+
+1. **Macro regime** — trigger `macro-warning` skill first. In 🔴 RED regime, even a 20% beat can sell off (AMD 2/3/2026 beat 23%, dropped -17.31%). RED regime → recommend trim/hedge only, no adds regardless of expected reaction.
+2. **Insider 60d window** — `~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py TICKER --window 60` (60d catches pre-earnings ad-hoc activity that 90d dilutes). Pre-earnings C-suite distribution = they know something. Never trust yfinance "% Net Shares" headline (RSU pollutes it). Form 4 code "P" only counts as buy.
+3. **Position context first** — if user already holds, lead with their position size + cost basis + holding period. Generic "buy/sell" without position context is useless.
+4. **3-tier entry if recommending add** — Don't say "buy after earnings". Map T1 = post-earnings reaction level, T2 = 50DMA support, T3 = 200DMA / pre-earnings level. NEVER "buy at market" on earnings hype.
+5. **Tax for trims** — If trimming a position held < 12 months, run `tax-optimize` for STCG vs LTCG impact. STCG ~25-37% federal vs LTCG 15-20%. Often changes the recommendation (hold 30 more days → save 10%).
+6. **Sizing** — ≤ 10% single name; if recommending add post-earnings, current allocation must allow it.
+
+**"Look carefully" rule**: the most common pre-earnings mistake is treating "beat consensus" as automatic upside. Always answer "what's already priced in" (Step 4 below) — if Forward P/E expanded 30% in 3 months, the beat is already discounted.
+
+See [README's Hard Rules](../README.md#%EF%B8%8F-hard-rules-never-violate) for the full anti-pattern list.
+
+---
+
 ## Goal
 
 Answer 3 questions:
@@ -192,13 +209,17 @@ Based on the 4 scenarios, give SPECIFIC action:
 
 ## Hard rules
 
-1. **Never recommend "hold through earnings" without setting a stop.** Implied move is real money.
-2. **Compare last 3-4 quarters more heavily than 8q avg.** Pattern recently changed = more relevant.
-3. **Big beats sometimes lead to big drops.** AMD 2/3/2026: EPS beat 23% → -17.31%. Always check "is this priced in".
-4. **IV crush is real.** Buy options 5+ days out, sell into earnings hype.
-5. **Never sell naked puts on stocks you wouldn't own.** Sell put = "I want to buy at $X". If $X isn't a level you'd actually buy at, don't sell.
-6. **Cite implied move source.** Either ATM straddle calculation or WebSearch with link.
-7. **When user is already long**: lead with their position, not generic analysis.
+1. **Pre-flight before recommending.** Skip the checklist at top = incomplete call. Macro + insider 60d + position context are not optional.
+2. **Never recommend "hold through earnings" without setting a stop.** Implied move is real money.
+3. **Compare last 3-4 quarters more heavily than 8q avg.** Pattern recently changed = more relevant.
+4. **Big beats sometimes lead to big drops.** AMD 2/3/2026: EPS beat 23% → -17.31%. Always check "is this priced in".
+5. **In 🔴 RED macro regime, no new longs** regardless of earnings setup — trim/hedge only. Document the regime call in the output.
+6. **IV crush is real.** Buy options 5+ days out, sell into earnings hype.
+7. **Never sell naked puts on stocks you wouldn't own.** Sell put = "I want to buy at $X". If $X isn't a level you'd actually buy at, don't sell.
+8. **Cite implied move source.** Either ATM straddle calculation or WebSearch with link.
+9. **When user is already long**: lead with their position, not generic analysis.
+10. **3-tier entry for any add recommendation.** "Buy at market post-earnings" = wrong answer. Always map T1/T2/T3.
+11. **Tax-aware trims.** If position held < 12 months, surface STCG impact in the recommendation, not as footnote.
 
 ## Common pitfalls
 

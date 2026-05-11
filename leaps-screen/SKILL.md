@@ -5,6 +5,23 @@ description: LEAPS (long-dated equity options, 1-3 years out) selection framewor
 
 # LEAPS Screen — Long-Dated Options Selection
 
+## 🔍 Pre-flight checklist — LEAPS amplify everything, including mistakes
+
+LEAPS give 5-10x leverage. **Every methodology layer matters 5-10x more.** Required checks before recommending a strike:
+
+1. **Macro regime is non-negotiable** — trigger `macro-warning`. LEAPS in 🔴 RED regime is a wealth-destruction trade. RED → only suggest LEAPS on deep-value names at 200DMA, never momentum names. YELLOW → cap LEAPS allocation at 3% of book. GREEN → full plan.
+2. **Insider strict on the underlying** — `~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py TICKER --window 90`. If C-suite is distributing while user is considering a 2-year LEAPS, that's a hard NO. Form 4 code "P" only — RSU grants look bullish in headlines but aren't open-market buys.
+3. **3-tier entry on the UNDERLYING, mapped to LEAPS strikes** — Don't recommend "Buy Jan 2027 $1100 call at market". Map: at $current → which strike? at -20% drawdown → which deeper-ITM strike? at 200DMA → which strike? User gets 3 strikes mapped to 3 underlying levels.
+4. **Sizing 3-5% MAX per LEAPS** — and that's only if confidence ≥ 8/10. LEAPS can go to $0; size accordingly.
+5. **Tax-aware exit** — LEAPS held > 1 year = LTCG. If user wants to exit within 12 months, mention STCG hit and quantify it. May be worth holding 30 more days.
+6. **IV check** — If IV > 80% annualized, premium is too rich. Recommend waiting or smaller size, not just "the strike."
+
+**"Look carefully" rule**: the most expensive LEAPS mistake is buying ATM/slightly-OTM on a momentum name at 52w high in YELLOW/RED regime. Theta + IV crush + first 10% drawdown wipes 60% of premium in weeks. ALWAYS check: where's the stock vs 200DMA + what's the macro regime + has insider been selling 90d?
+
+See [README's Hard Rules](../README.md#%EF%B8%8F-hard-rules-never-violate) for the full anti-pattern list.
+
+---
+
 ## What is a LEAPS?
 
 **LEAPS** = Long-term Equity AnticiPation Securities. Options with **>1 year to expiry**. Used for:

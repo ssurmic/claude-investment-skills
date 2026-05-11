@@ -25,7 +25,7 @@
 
 **经验规则**：本文件告诉你**该做什么**；链接的 SETUP 文档是**精确的按钮级细节**。按本文件的 flow 走，遇到"做 SETUP-WEBHOOK.md 的 Part 3"时，打开那一节跟用户逐字走。
 
-**关于 AGENT-TOOL-REFERENCE.md**：当前覆盖 5 个分析工具 + `macro-warning` skill。**还没有**覆盖 `price-alert` 的 NL → 命令映射 —— 暂时让用户去 [`price-alert/EXAMPLES.md`](./price-alert/EXAMPLES.md) 看 chat 说法，[`price-alert/SKILL.md`](./price-alert/SKILL.md) 看决策树。
+**`AGENT-TOOL-REFERENCE.md` 覆盖范围**：6 个 CLI 工具（`insider_ratio.py`、`cluster_buy_scan.py`、`quote_pull.py`、`option_walls.py`、`max_pain.py`、`price-alert/` 套件）+ Skill Catalog 把全部 13 个纯 NL skill（analyze-stock、earnings-prep、find-alpha、leaps-screen 等）映射到中英 trigger 短语。Setup 完成后读它的 Skill Catalog 章节，掌握"用户说什么 → 触发哪个 skill"。
 
 ---
 
