@@ -1,8 +1,13 @@
-# Symlinks to Amazon-internal workspace skills (not portable, not for sharing)
+# Skills NOT part of this investment toolkit — kept locally for the repo
+# owner's personal workflows, never published. New entries go here, not in
+# commit history. If one of these slipped into git tracking, untrack with:
+#   git rm -r --cached <dir>
+agent-reach
 cr-review
 create-amazon-internal-sims
 design-doc
 humanize-tone
+playwright-cli
 publish-cr
 rca
 research

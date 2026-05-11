@@ -74,6 +74,99 @@ analyze NVDA          # not /analyze-stock — natural language works
 
 ---
 
+## 📦 Component map — what runs where (read this first)
+
+The most common misconception: "GitHub Actions is the engine." **It is not.** GitHub is a small storage + cron layer. The actual intelligence runs on **your laptop** inside Claude Code. Here's the breakdown:
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│  YOUR LAPTOP (where the "thinking" happens)                              │
+│                                                                          │
+│  ┌──────────────────────┐                                               │
+│  │  💬 Claude Code      │  ← the AI brain. Reads your natural-language  │
+│  │  (cli or IDE)        │     input, picks the right skill, runs it.    │
+│  └──────────┬───────────┘                                               │
+│             │ matches NL against SKILL.md descriptions                  │
+│             ↓                                                            │
+│  ┌──────────────────────────────────────────────────────────────────┐ │
+│  │  ~/.claude/skills/  (THIS REPO, cloned here)                     │ │
+│  │  ├── analyze-stock/SKILL.md       ← methodology + decision tree │ │
+│  │  ├── earnings-prep/SKILL.md          (markdown instructions     │ │
+│  │  ├── macro-warning/SKILL.md           Claude follows verbatim)  │ │
+│  │  ├── ... 14 skills total ...                                    │ │
+│  │  │                                                              │ │
+│  │  ├── review-investment-screenshot/scripts/                      │ │
+│  │  │   ├── insider_ratio.py         ← Python helpers Claude       │ │
+│  │  │   ├── macro_pull.py               EXECUTES when a skill      │ │
+│  │  │   ├── quote_pull.py               needs hard data            │ │
+│  │  │   ├── option_walls.py                                        │ │
+│  │  │   └── max_pain.py                                            │ │
+│  │  │                                                              │ │
+│  │  └── price-alert/                                               │ │
+│  │      ├── alerts.json              ← config file. Edited by      │ │
+│  │      │                               you OR by the bot (chat).  │ │
+│  │      └── scripts/check_alerts.py  ← NOT run locally;            │ │
+│  │                                      runs on GitHub Actions.    │ │
+│  └──────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────┘
+              │ git push (when you add/cancel alerts, or commit changes)
+              ↓
+┌──────────────────────────────────────────────────────────────────────────┐
+│  GITHUB (small role: storage + cron, no AI here)                         │
+│                                                                          │
+│  📦 Repo                                                                 │
+│   └── alerts.json   ← source of truth for active alerts (synced w/ local)│
+│                                                                          │
+│  ⏰ GitHub Actions (cron-as-a-service, free for public repos)            │
+│   ├── price-alerts.yml   every 2 min, 24/7                              │
+│   │   → reads alerts.json → fetches prices from Yahoo                   │
+│   │   → if a condition matches → POSTs to Telegram. That's it.          │
+│   │   (no AI in this loop. Pure Python `if price <= threshold`.)         │
+│   │                                                                      │
+│   └── telegram-chat.yml  every 2-5 min  (ONLY if using Option A chat)   │
+│       → poll Telegram → call Anthropic Claude → modify alerts.json      │
+│       (this one DOES use Claude API, but as a service called from cron) │
+└──────────────────────────────────────────────────────────────────────────┘
+              ↕  HTTPS POST  (Telegram delivers user msgs / receives notifications)
+┌──────────────────────────────────────────────────────────────────────────┐
+│  TELEGRAM (notification + bot chat) — Telegram's servers, free forever   │
+│   └── your @YourBotName_bot                                              │
+└──────────────────────────────────────────────────────────────────────────┘
+
+         [ Option B chat: replace telegram-chat.yml with this ↓ ]
+┌──────────────────────────────────────────────────────────────────────────┐
+│  CLOUDFLARE WORKER (optional, instant chat)                              │
+│   └── price-alert-webhook.<sub>.workers.dev   ← Telegram POSTs here     │
+│       → calls Claude API → modifies alerts.json via GitHub Contents API │
+│       (replaces telegram-chat.yml. Faster (1-3 sec) but same outcome.)   │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### Where does each kind of "moving average" come from?
+
+This trips people up because the SAME data is computed in TWO different places depending on what you're asking for:
+
+| You ask | Where it computes | Why |
+|---|---|---|
+| "What's NVDA's 50DMA right now?" (analysis) | **Your laptop**, via `quote_pull.py` called by `analyze-stock` skill | Claude Code is interactive; pulls live data when you ask |
+| "Alert me when NVDA crosses 50DMA" (alert) | **GitHub Actions runner**, via `check_alerts.py` cron | Cron runs even when your laptop is off; that's the whole point of alerts |
+| "Set the alert via Telegram bot" (chat) | **GitHub Actions** (Option A) or **Cloudflare Worker** (Option B) | Whichever chat path you picked — both call the same Yahoo API |
+
+### Where does each kind of intelligence live?
+
+| Question | Who decides | Where Claude lives |
+|---|---|---|
+| Which skill matches "analyze NVDA"? | Claude Code on your laptop | Local |
+| Should we add NVDA at this price? | `analyze-stock` skill, runs locally with your Claude | Local |
+| Is `alerts.json` valid JSON? | GitHub Action sanity check | GitHub (no AI needed) |
+| Did NVDA cross $213.89? | `check_alerts.py` Python | GitHub cron (no AI) |
+| What did the user mean by "等英伟达跌破 213.89 通知我"? | Anthropic API tool-use call | GitHub cron (Option A) OR Cloudflare Worker (Option B) |
+| Should I add NVDA after the alert fires? | Your laptop's Claude Code with `analyze-stock` | Local |
+
+**The pattern**: **all real investment thinking happens locally** in Claude Code. GitHub / Cloudflare only handle the boring stuff (scheduling, NL parsing for short bot replies, JSON edits). You never have to trust a remote AI with your decisions — the decision-grade analysis only runs when YOU are sitting in front of Claude Code.
+
+---
+
 ## 🏗️ Architecture at a glance
 
 For the `price-alert` skill (optional Telegram + Anthropic API integration). The chat path has **two interchangeable implementations** — pick one based on the latency you want:

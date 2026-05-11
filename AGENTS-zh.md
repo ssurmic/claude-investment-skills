@@ -29,6 +29,45 @@
 
 ---
 
+## 心智模型 —— 啥跑在哪（动手之前先内化这个）
+
+引导用户走 setup 之前，先在脑里建好组件分工。**大多数 setup 困惑来自把 GitHub Actions 当成"引擎"** —— 不是。GitHub 只是小小的存储 + cron 层。智能跑在用户电脑的 Claude Code 里。
+
+```
+本地（用户电脑）
+  ├── Claude Code              ← AI 大脑（读 NL，挑 skill）
+  ├── ~/.claude/skills/        ← 本仓库，clone 到这
+  │   ├── */SKILL.md           ← Claude 照着走的 markdown 指令
+  │   ├── */scripts/*.py       ← Claude 执行的 Python 帮手
+  │   └── price-alert/alerts.json  ← 用户或 bot 都能改
+  └── （analyze-stock 这种分析 skill **从不**调远端 GitHub ——
+       它们直接从本地拉 yfinance + openinsider）
+
+GITHUB（小角色：存储 + cron，**价格扫描 loop 里没有 AI**）
+  ├── repo 存储                ← alerts.json source of truth
+  ├── price-alerts.yml         ← cron 2 分钟: 读 alerts.json → 查价 →
+  │                              推 Telegram。**纯 Python，不调 Claude API**
+  └── telegram-chat.yml        ← （仅选项 A）cron 2-5 分钟: poll Telegram →
+                                  调 Claude API → 改 alerts.json
+
+TELEGRAM
+  └── @bot                     ← 收推送、收发用户聊天
+
+CLOUDFLARE WORKER（仅选项 B chat 路径 —— 替换 telegram-chat.yml）
+  └── webhook                  ← 即时收 Telegram POST → 调 Claude API → 改 alerts.json
+```
+
+**各种"移动平均线"在哪算**：
+- "NVDA 当前 50DMA 是多少？"（分析）→ 用户电脑（Claude 调 `quote_pull.py`）
+- "NVDA 跌破 50DMA 提醒我"（cron 驱动的 alert）→ GitHub Actions runner（`check_alerts.py`）
+- "用 bot 设这个 alert"（chat）→ chat 路径所在处（GH cron 或 CF Worker）
+
+**给用户解释时，开头就说**："所有真正的投资思考都在你电脑上做。GitHub 只是一个 JSON 文件 + 一个推 Telegram 的 cron。Cloudflare（如果你装了）只是更快版本的同一件事。**你没有把决策权交给服务器**。"
+
+这个 framing 化解了常见的"这玩意会自己交易吗"的担心 —— 答案是不会，它只是在你手机上推送研究级别的触发提醒。
+
+---
+
 ## 阶段 1 —— PREP（动手**之前**做这个）
 
 先分类用户的情况。每个问题只在你**没法从上下文推断**时才问（用户消息里的文件路径、OS 提示、之前的对话都算上下文）。

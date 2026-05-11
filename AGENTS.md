@@ -29,6 +29,45 @@ This file is the canonical agent guide. Codex looks for `AGENTS.md`, Claude Code
 
 ---
 
+## Mental model — what runs where (read before doing anything)
+
+Before walking the user through setup, internalize the component map. Most setup confusion comes from agents (and users) thinking GitHub Actions is the engine. **It is not.** GitHub is a small storage + cron layer. The intelligence runs on the user's laptop inside Claude Code.
+
+```
+LOCAL (user's laptop)
+  ├── Claude Code              ← the AI brain (reads NL, picks skills)
+  ├── ~/.claude/skills/        ← THIS REPO, cloned here
+  │   ├── */SKILL.md           ← markdown instructions Claude follows
+  │   ├── */scripts/*.py       ← Python helpers Claude executes
+  │   └── price-alert/alerts.json  ← edited by user OR by bot
+  └── (analysis skills like analyze-stock NEVER call out to GitHub —
+       they fetch yfinance + openinsider directly from the laptop)
+
+GITHUB (small role: storage + cron, NO AI here in the price-scan loop)
+  ├── repo storage             ← alerts.json source of truth
+  ├── price-alerts.yml         ← cron 2 min: read alerts.json → check prices →
+  │                              Telegram push. PURE PYTHON, no Claude API call.
+  └── telegram-chat.yml        ← (Option A only) cron 2-5 min: poll Telegram →
+                                  Claude API → modify alerts.json.
+
+TELEGRAM
+  └── @bot                     ← receives push notifications, sends user chat
+
+CLOUDFLARE WORKER (Option B chat path only — replaces telegram-chat.yml)
+  └── webhook                  ← instant Telegram-POST receiver → Claude API → alerts.json
+```
+
+**Where each "moving average" gets computed**:
+- "What's NVDA's 50DMA right now?" (analysis) → user's laptop (Claude calls `quote_pull.py`)
+- "Alert me when NVDA crosses 50DMA" (cron-driven alert) → GitHub Actions runner (`check_alerts.py`)
+- "Set this alert via bot" (chat) → wherever the chat path lives (GH cron OR CF Worker)
+
+**When you explain this to the user, lead with**: "All real investment thinking happens on your laptop. GitHub is just a JSON file + a cron job that pushes Telegram messages. Cloudflare (if you set it up) is just a faster version of that cron. You're not delegating decisions to a server."
+
+This framing dissolves the common worry "is this thing trading for me?" — the answer is no, it's pinging your phone with research-grade triggers.
+
+---
+
 ## Phase 1 — PREP (do this *before* touching anything)
 
 Classify the user's situation first. Ask each question only if you can't already infer the answer from context (file paths in their message, OS hints, prior conversation).

@@ -74,6 +74,99 @@ bash ~/.claude/skills/setup.sh
 
 ---
 
+## 📦 组件分工 —— 谁在哪跑（先看这个）
+
+最常见的误解：**"GitHub Actions 是这个工具的引擎"**。**不是**。GitHub 只承担一小部分（存储 + cron），真正的"思考"发生在**你的电脑**上的 Claude Code 里。具体分工：
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│  你的电脑（"思考"发生的地方）                                              │
+│                                                                          │
+│  ┌──────────────────────┐                                               │
+│  │  💬 Claude Code      │  ← AI 大脑。读你的自然语言，挑对的 skill，跑它  │
+│  │  (CLI 或 IDE)        │                                               │
+│  └──────────┬───────────┘                                               │
+│             │ 把 NL 跟 SKILL.md description 匹配                        │
+│             ↓                                                            │
+│  ┌──────────────────────────────────────────────────────────────────┐ │
+│  │  ~/.claude/skills/  （本仓库，clone 到这）                         │ │
+│  │  ├── analyze-stock/SKILL.md       ← 方法论 + 决策树（markdown   │ │
+│  │  ├── earnings-prep/SKILL.md          指令，Claude 照着走）      │ │
+│  │  ├── macro-warning/SKILL.md                                     │ │
+│  │  ├── ... 共 14 个 skill ...                                     │ │
+│  │  │                                                              │ │
+│  │  ├── review-investment-screenshot/scripts/                      │ │
+│  │  │   ├── insider_ratio.py         ← Python 帮手。当 skill 需要 │ │
+│  │  │   ├── macro_pull.py               硬数据时，Claude 执行它   │ │
+│  │  │   ├── quote_pull.py                                          │ │
+│  │  │   ├── option_walls.py                                        │ │
+│  │  │   └── max_pain.py                                            │ │
+│  │  │                                                              │ │
+│  │  └── price-alert/                                               │ │
+│  │      ├── alerts.json              ← 配置文件。你或 bot（聊天）  │ │
+│  │      │                               都能改。                  │ │
+│  │      └── scripts/check_alerts.py  ← 这个**不在本地跑**；       │ │
+│  │                                      在 GitHub Actions 上跑。   │ │
+│  └──────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────┘
+              │ git push（你加/取消 alert 或 commit 改动）
+              ↓
+┌──────────────────────────────────────────────────────────────────────────┐
+│  GITHUB（小角色：存储 + cron，**这里没有 AI**）                          │
+│                                                                          │
+│  📦 Repo                                                                 │
+│   └── alerts.json   ← 活跃 alert 的 source of truth（跟本地同步）       │
+│                                                                          │
+│  ⏰ GitHub Actions（cron-as-a-service，public repo 免费）                │
+│   ├── price-alerts.yml   每 2 分钟，24/7                                │
+│   │   → 读 alerts.json → 从 Yahoo 拉价格                                │
+│   │   → 命中条件 → POST 到 Telegram。就这样。                            │
+│   │   （这个 loop **没有 AI**。纯 Python `if price <= threshold`。）    │
+│   │                                                                      │
+│   └── telegram-chat.yml  每 2-5 分钟（**只有选项 A chat 才启用**）      │
+│       → poll Telegram → 调 Anthropic Claude → 改 alerts.json            │
+│       （这个**会**调 Claude API，但是当作"服务"被 cron 调用而已）       │
+└──────────────────────────────────────────────────────────────────────────┘
+              ↕  HTTPS POST（Telegram 投递用户消息 / 接收通知）
+┌──────────────────────────────────────────────────────────────────────────┐
+│  TELEGRAM（通知 + bot 聊天）—— Telegram 服务器，永久免费                  │
+│   └── 你的 @YourBotName_bot                                              │
+└──────────────────────────────────────────────────────────────────────────┘
+
+         [ 选项 B chat：用这个替换 telegram-chat.yml ↓ ]
+┌──────────────────────────────────────────────────────────────────────────┐
+│  CLOUDFLARE WORKER（可选，秒回聊天）                                      │
+│   └── price-alert-webhook.<sub>.workers.dev   ← Telegram POST 到这里     │
+│       → 调 Claude API → 通过 GitHub Contents API 改 alerts.json         │
+│       （替换 telegram-chat.yml。更快（1-3 秒），结果一样。）             │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### "移动平均线"这个数据从哪算？
+
+这个最容易让人糊涂 —— **同样的数据**根据你问的目的，**在两个不同的地方算**：
+
+| 你问 | 在哪算 | 为啥 |
+|---|---|---|
+| "NVDA 当前 50DMA 是多少？"（分析）| **你的电脑**，`analyze-stock` skill 调 `quote_pull.py` | Claude Code 是交互式的；你问的时候拉实时数据 |
+| "NVDA 跌破 50DMA 提醒我"（alert）| **GitHub Actions runner**，跑 `check_alerts.py` cron | Cron 在你电脑关机时也得跑 —— 这是 alert 的全部意义 |
+| "通过 Telegram bot 设这个 alert"（chat）| **GitHub Actions**（选项 A）或 **Cloudflare Worker**（选项 B）| 看你选哪条 chat 路径 —— 两者都调同一个 Yahoo API |
+
+### 各种"智能"住在哪？
+
+| 问题 | 谁决定 | Claude 在哪 |
+|---|---|---|
+| "analyze NVDA" 对应哪个 skill？ | 你电脑的 Claude Code | 本地 |
+| 现在该不该加 NVDA？ | `analyze-stock` skill，本地的 Claude 跑 | 本地 |
+| `alerts.json` 是合法 JSON 吗？ | GitHub Action 的 sanity check | GitHub（不要 AI） |
+| NVDA 跨过 $213.89 了吗？ | `check_alerts.py` 纯 Python | GitHub cron（不要 AI） |
+| 用户说"等英伟达跌破 213.89 通知我"是啥意思？ | Anthropic API tool-use 调用 | GitHub cron（选项 A）或 Cloudflare Worker（选项 B） |
+| Alert 触发后该不该加？ | 你电脑的 Claude Code 跑 `analyze-stock` | 本地 |
+
+**规律**：**所有真正的投资思考都发生在本地** Claude Code 里。GitHub / Cloudflare 只处理无聊的事（调度、bot 简短回复的 NL 解析、JSON 编辑）。你**永远不需要把决策权交给一个远端 AI** —— 决策级别的分析只在你坐在 Claude Code 前的时候跑。
+
+---
+
 ## 🏗️ 架构一览
 
 `price-alert` skill（可选 Telegram + Anthropic API 集成）。chat 路径有**两种实现方式可互换** —— 按你想要的延迟挑一个：
