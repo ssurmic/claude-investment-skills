@@ -1,0 +1,58 @@
+name: Render Mermaid Diagrams
+
+# Auto-regenerate diagrams/*.svg and diagrams/*.png from diagrams/*.mmd whenever
+# a contributor pushes a change to a .mmd source file. Keeps the checked-in
+# images in sync without anyone needing mermaid-cli locally.
+#
+# The workflow only runs when a .mmd file (or the workflow itself) changes, so
+# it won't fire on every push. It also skips committing when there's no diff,
+# preventing infinite re-render loops.
+
+on:
+  push:
+    paths:
+      - 'diagrams/**.mmd'
+      - 'scripts/render-diagrams.sh'
+      - '.github/workflows/render-diagrams.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install mermaid-cli
+        run: npm install -g @mermaid-js/mermaid-cli@11
+
+      - name: Install CJK fonts (for Chinese diagrams)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk
+
+      - name: Render diagrams
+        run: bash scripts/render-diagrams.sh
+
+      - name: Commit regenerated images (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain diagrams/)" ]]; then
+            git add diagrams/*.svg diagrams/*.png
+            git commit -m "chore: regenerate diagram images from .mmd sources"
+            git push
+          else
+            echo "No diagram changes — nothing to commit."
+          fi

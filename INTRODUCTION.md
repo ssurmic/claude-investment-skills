@@ -137,57 +137,9 @@ The full mapping is in [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md).
 
 If you enable the optional `price-alert` skill with Telegram bot + Anthropic API, here's the complete system. The **chat path has two interchangeable implementations** (pick one based on the latency you want); the **price scan path** is always the same.
 
-```mermaid
-flowchart TB
-    User([👤 You])
-    Phone[📱 Telegram on Phone]
-    ClaudeCode[💬 Claude Code<br/>your laptop]
+![Architecture: price-alert skill with both polling and webhook chat paths](./diagrams/architecture-en.svg)
 
-    User -->|"set alerts via NL<br/>'GLW 跌到 140 通知我'"| ClaudeCode
-    User <-->|"chat in NL with bot"| Phone
-
-    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>alerts.json = source of truth)]
-
-    Phone <-->|"messages"| TGAPI([📡 Telegram Bot API])
-
-    %% Price scan path — always on
-    Repo -->|"checkout"| W1["⏰ price-alerts.yml<br/>GH Actions cron<br/>every 2min, 24/7"]
-    W1 --> CheckPy[check_alerts.py]
-    CheckPy <-->|"prices"| YF([📊 Yahoo Finance API])
-    CheckPy -->|"alert fired:<br/>sendMessage"| TGAPI
-
-    %% Chat path — pick ONE of the two
-    TGAPI -.->|"Option A: getUpdates pull<br/>every 2-5 min"| W2["⏰ telegram-chat.yml<br/>GH Actions cron<br/>latency 2-15 min · $0"]
-    TGAPI ==>|"Option B: HTTPS POST push<br/>instant"| Worker[["⚡ Cloudflare Worker<br/>price-alert-webhook<br/>latency 1-3 sec · $0"]]
-
-    W2 --> ChatPy[chat_handler.py]
-    ChatPy <-->|"NL parse + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
-    Worker <-->|"NL parse + tool use"| Claude
-
-    ChatPy -.->|"git commit alerts.json"| Repo
-    Worker -.->|"PUT alerts.json<br/>via Contents API"| Repo
-
-    TGAPI -->|"push notification"| Phone
-
-    Secrets[🔐 Secrets<br/>GH Secrets + CF Worker Secrets]
-    Secrets -.-> W1
-    Secrets -.-> W2
-    Secrets -.-> Worker
-
-    classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
-    classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    classDef webhook fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
-    classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
-    classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
-    classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
-
-    class User,Phone,ClaudeCode user
-    class W1,W2,CheckPy,ChatPy worker
-    class Worker webhook
-    class YF,TGAPI,Claude api
-    class Repo storage
-    class Secrets secret
-```
+> 🔧 Source: [`diagrams/architecture-en.mmd`](./diagrams/architecture-en.mmd) — edit the `.mmd` file, push, and the `.svg`/`.png` regenerate automatically via [`render-diagrams.yml`](./.github/workflows/render-diagrams.yml). See [README → Diagrams pipeline](./README.md#-diagrams-pipeline-mermaid--svg) for the local workflow.
 
 ### ⏱️ Why the webhook is 100-300x faster
 

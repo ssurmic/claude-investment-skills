@@ -42,57 +42,9 @@ analyze NVDA          # not /analyze-stock — natural language works
 
 For the `price-alert` skill (optional Telegram + Anthropic API integration). The chat path has **two interchangeable implementations** — pick one based on the latency you want:
 
-```mermaid
-flowchart TB
-    User([👤 You])
-    Phone[📱 Telegram on Phone]
-    ClaudeCode[💬 Claude Code<br/>your laptop]
+![Architecture: price-alert skill with both polling and webhook chat paths](./diagrams/architecture-en.svg)
 
-    User -->|"set alerts via NL<br/>'GLW 跌到 140 通知我'"| ClaudeCode
-    User <-->|"chat in NL with bot"| Phone
-
-    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>alerts.json = source of truth)]
-
-    Phone <-->|"messages"| TGAPI([📡 Telegram Bot API])
-
-    %% Price scan path — always on
-    Repo -->|"checkout"| W1["⏰ price-alerts.yml<br/>GH Actions cron<br/>every 2min, 24/7"]
-    W1 --> CheckPy[check_alerts.py]
-    CheckPy <-->|"prices"| YF([📊 Yahoo Finance API])
-    CheckPy -->|"alert fired:<br/>sendMessage"| TGAPI
-
-    %% Chat path — pick ONE
-    TGAPI -.->|"Option A: getUpdates pull<br/>every 2-5 min"| W2["⏰ telegram-chat.yml<br/>GH Actions cron<br/>latency 2-15 min · $0"]
-    TGAPI ==>|"Option B: HTTPS POST push<br/>instant"| Worker[["⚡ Cloudflare Worker<br/>price-alert-webhook<br/>latency 1-3 sec · $0"]]
-
-    W2 --> ChatPy[chat_handler.py]
-    ChatPy <-->|"NL parse + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
-    Worker <-->|"NL parse + tool use"| Claude
-
-    ChatPy -.->|"git commit alerts.json"| Repo
-    Worker -.->|"PUT alerts.json<br/>via Contents API"| Repo
-
-    TGAPI -->|"push notification"| Phone
-
-    Secrets[🔐 Secrets<br/>GH Secrets + CF Worker Secrets]
-    Secrets -.-> W1
-    Secrets -.-> W2
-    Secrets -.-> Worker
-
-    classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
-    classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    classDef webhook fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
-    classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
-    classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
-    classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
-
-    class User,Phone,ClaudeCode user
-    class W1,W2,CheckPy,ChatPy worker
-    class Worker webhook
-    class YF,TGAPI,Claude api
-    class Repo storage
-    class Secrets secret
-```
+> 🔧 Source: [`diagrams/architecture-en.mmd`](./diagrams/architecture-en.mmd) — edit the `.mmd` file, push, and the `.svg`/`.png` regenerate automatically via [`render-diagrams.yml`](./.github/workflows/render-diagrams.yml). See [Diagrams pipeline](#-diagrams-pipeline-mermaid--svg) below.
 
 **Two chat paths, same outcome — different latency**:
 
@@ -109,6 +61,58 @@ Start with Option A. Upgrade to webhook only if you actively chat with the bot a
 **Monthly cost estimate**: $0 if you skip the optional Telegram chat bot; ~$1-4/mo for moderate use of bidirectional NL chat via Anthropic API (same cost regardless of which chat path you pick — the API call is identical). Full breakdown in [INTRODUCTION.md](./INTRODUCTION.md#-what-this-costs-you-per-month).
 
 For a full deep-dive into how each piece works, see [INTRODUCTION.md → How it all works](./INTRODUCTION.md#-how-it-all-works--full-architecture-advanced).
+
+---
+
+## 🎨 Diagrams pipeline (Mermaid → SVG)
+
+The architecture images in this README and in [`INTRODUCTION.md`](./INTRODUCTION.md) are **not** rendered client-side by GitHub. They live as checked-in `.svg` + `.png` files generated from Mermaid source so the README loads fast and looks identical across GitHub, mobile, and local viewers.
+
+```
+diagrams/
+├── architecture-en.mmd       ← source of truth (edit this)
+├── architecture-en.svg       ← committed artifact, used by README.md
+├── architecture-en.png       ← committed artifact, fallback for non-SVG viewers
+├── architecture-zh.mmd       ← Chinese source of truth
+├── architecture-zh.svg       ← used by README-zh.md
+└── architecture-zh.png
+```
+
+### Local workflow
+
+```bash
+# 1. Install mermaid-cli (one-time)
+npm install -g @mermaid-js/mermaid-cli
+
+# 2. Edit a diagram source
+$EDITOR diagrams/architecture-en.mmd
+
+# 3. Regenerate the .svg + .png next to it
+bash scripts/render-diagrams.sh                  # render all
+bash scripts/render-diagrams.sh diagrams/architecture-en.mmd  # one file
+
+# 4. Commit both the .mmd source and the regenerated artifacts
+git add diagrams/architecture-en.{mmd,svg,png}
+git commit -m "docs: tweak architecture diagram"
+```
+
+### CI workflow (auto-render on push)
+
+[`.github/workflows/render-diagrams.yml`](./.github/workflows/render-diagrams.yml) watches `diagrams/**.mmd` and regenerates the `.svg`/`.png` whenever you push a source change. The workflow installs `mermaid-cli` + `fonts-noto-cjk` (so Chinese diagrams render correctly), runs `scripts/render-diagrams.sh`, and commits any image deltas back to `main`.
+
+This means you can **edit just the `.mmd` file in the GitHub web editor** and the workflow handles the render. No local mermaid-cli required if you don't want to install it.
+
+### Why pre-render instead of letting GitHub render Mermaid blocks?
+
+| | GitHub native `\`\`\`mermaid` block | Pre-rendered SVG (this repo) |
+|---|---|---|
+| Render quality | Variable; clipping, font fallback on mobile | Pixel-perfect, identical everywhere |
+| Load speed | Client-side render after page load | Instant (static asset) |
+| Works in `git clone` viewer (VS Code, etc.) | ✅ usually | ✅ always |
+| Embeddable in other places (slides, docs) | ❌ Mermaid-only | ✅ SVG/PNG works anywhere |
+| Source-of-truth file in repo | ❌ Inline in `.md`, hard to diff | ✅ Standalone `.mmd` file |
+
+---
 
 ---
 

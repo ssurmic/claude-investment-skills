@@ -1,0 +1,49 @@
+flowchart TB
+    User([👤 你])
+    Phone[📱 手机 Telegram]
+    ClaudeCode[💬 Claude Code<br/>你电脑]
+
+    User -->|"用 NL 设 alert<br/>'GLW 跌到 140 通知我'"| ClaudeCode
+    User <-->|"用 NL 跟 bot 聊"| Phone
+
+    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>alerts.json = source of truth)]
+
+    Phone <-->|"消息"| TGAPI([📡 Telegram Bot API])
+
+    %% 价格扫描路径 —— 永远运行
+    Repo -->|"checkout"| W1["⏰ price-alerts.yml<br/>GH Actions cron<br/>每 2 min, 24/7"]
+    W1 --> CheckPy[check_alerts.py]
+    CheckPy <-->|"价格"| YF([📊 Yahoo Finance API])
+    CheckPy -->|"alert 触发:<br/>sendMessage"| TGAPI
+
+    %% Chat 路径 —— 二选一
+    TGAPI -.->|"选项 A: getUpdates pull<br/>每 2-5 分钟"| W2["⏰ telegram-chat.yml<br/>GH Actions cron<br/>延迟 2-15 min · $0"]
+    TGAPI ==>|"选项 B: HTTPS POST push<br/>即时"| Worker[["⚡ Cloudflare Worker<br/>price-alert-webhook<br/>延迟 1-3 秒 · $0"]]
+
+    W2 --> ChatPy[chat_handler.py]
+    ChatPy <-->|"NL 解析 + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
+    Worker <-->|"NL 解析 + tool use"| Claude
+
+    ChatPy -.->|"git commit alerts.json"| Repo
+    Worker -.->|"PUT alerts.json<br/>via Contents API"| Repo
+
+    TGAPI -->|"推送通知"| Phone
+
+    Secrets[🔐 Secrets<br/>GH Secrets + CF Worker Secrets]
+    Secrets -.-> W1
+    Secrets -.-> W2
+    Secrets -.-> Worker
+
+    classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef webhook fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
+    classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+
+    class User,Phone,ClaudeCode user
+    class W1,W2,CheckPy,ChatPy worker
+    class Worker webhook
+    class YF,TGAPI,Claude api
+    class Repo storage
+    class Secrets secret

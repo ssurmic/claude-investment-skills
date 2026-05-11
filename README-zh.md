@@ -42,57 +42,9 @@ bash ~/.claude/skills/setup.sh
 
 `price-alert` skill（可选 Telegram + Anthropic API 集成）。chat 路径有**两种实现方式可互换** —— 按你想要的延迟挑一个：
 
-```mermaid
-flowchart TB
-    User([👤 你])
-    Phone[📱 手机 Telegram]
-    ClaudeCode[💬 Claude Code<br/>你电脑]
+![架构图：price-alert skill 的两条 chat 路径](./diagrams/architecture-zh.svg)
 
-    User -->|"用 NL 设 alert<br/>'GLW 跌到 140 通知我'"| ClaudeCode
-    User <-->|"用 NL 跟 bot 聊"| Phone
-
-    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>alerts.json = source of truth)]
-
-    Phone <-->|"消息"| TGAPI([📡 Telegram Bot API])
-
-    %% 价格扫描路径 —— 永远运行
-    Repo -->|"checkout"| W1["⏰ price-alerts.yml<br/>GH Actions cron<br/>每 2 min, 24/7"]
-    W1 --> CheckPy[check_alerts.py]
-    CheckPy <-->|"价格"| YF([📊 Yahoo Finance API])
-    CheckPy -->|"alert 触发:<br/>sendMessage"| TGAPI
-
-    %% Chat 路径 —— 二选一
-    TGAPI -.->|"选项 A: getUpdates pull<br/>每 2-5 分钟"| W2["⏰ telegram-chat.yml<br/>GH Actions cron<br/>延迟 2-15 min · $0"]
-    TGAPI ==>|"选项 B: HTTPS POST push<br/>即时"| Worker[["⚡ Cloudflare Worker<br/>price-alert-webhook<br/>延迟 1-3 秒 · $0"]]
-
-    W2 --> ChatPy[chat_handler.py]
-    ChatPy <-->|"NL 解析 + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
-    Worker <-->|"NL 解析 + tool use"| Claude
-
-    ChatPy -.->|"git commit alerts.json"| Repo
-    Worker -.->|"PUT alerts.json<br/>via Contents API"| Repo
-
-    TGAPI -->|"推送通知"| Phone
-
-    Secrets[🔐 Secrets<br/>GH Secrets + CF Worker Secrets]
-    Secrets -.-> W1
-    Secrets -.-> W2
-    Secrets -.-> Worker
-
-    classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
-    classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    classDef webhook fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
-    classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
-    classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
-    classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
-
-    class User,Phone,ClaudeCode user
-    class W1,W2,CheckPy,ChatPy worker
-    class Worker webhook
-    class YF,TGAPI,Claude api
-    class Repo storage
-    class Secrets secret
-```
+> 🔧 源文件：[`diagrams/architecture-zh.mmd`](./diagrams/architecture-zh.mmd) —— 改 `.mmd` 文件然后 push，`.svg`/`.png` 会通过 [`render-diagrams.yml`](./.github/workflows/render-diagrams.yml) 自动重新生成。详见 [Diagrams pipeline](./README.md#-diagrams-pipeline-mermaid--svg)（README 英文版有完整说明）。
 
 **两条 chat 路径，效果相同 —— 延迟不同**：
 
@@ -109,6 +61,58 @@ flowchart TB
 **每月费用估算**：跳过可选的 Telegram chat bot = **$0**；中度 NL chat ~$1-4/月（Anthropic API，**两种路径一样的钱** —— Claude 调用本身一样）。完整成本细分见 [INTRODUCTION-zh.md](./INTRODUCTION-zh.md#-每月成本估算)。
 
 每个组件的详细工作机制见 [INTRODUCTION-zh.md → 完整系统怎么工作](./INTRODUCTION-zh.md#-完整系统怎么工作--架构图进阶)。
+
+---
+
+## 🎨 架构图 pipeline（Mermaid → SVG）
+
+本 README 和 [`INTRODUCTION-zh.md`](./INTRODUCTION-zh.md) 里的架构图**不是** GitHub 客户端渲染的 Mermaid，而是从 Mermaid 源文件生成的 `.svg` + `.png` 静态文件 —— README 加载更快，GitHub / 手机 / 本地 viewer 看起来都一致。
+
+```
+diagrams/
+├── architecture-en.mmd       ← source of truth（改这个）
+├── architecture-en.svg       ← committed artifact，README.md 用
+├── architecture-en.png       ← committed artifact，不支持 SVG 的 viewer 用
+├── architecture-zh.mmd       ← 中文 source of truth
+├── architecture-zh.svg       ← README-zh.md 用
+└── architecture-zh.png
+```
+
+### 本地工作流
+
+```bash
+# 1. 装 mermaid-cli（一次性）
+npm install -g @mermaid-js/mermaid-cli
+
+# 2. 改源文件
+$EDITOR diagrams/architecture-zh.mmd
+
+# 3. 重新生成旁边的 .svg + .png
+bash scripts/render-diagrams.sh                              # 全部 render
+bash scripts/render-diagrams.sh diagrams/architecture-zh.mmd # 只 render 一个
+
+# 4. 把 .mmd 源 + 生成的图一起 commit
+git add diagrams/architecture-zh.{mmd,svg,png}
+git commit -m "docs: 调整架构图"
+```
+
+### CI 工作流（push 后自动 render）
+
+[`.github/workflows/render-diagrams.yml`](./.github/workflows/render-diagrams.yml) 监听 `diagrams/**.mmd` 的变化 —— 你 push 改动后它自动重新生成 `.svg`/`.png`。这个 workflow 装 `mermaid-cli` + `fonts-noto-cjk`（确保中文渲染正常），跑 `scripts/render-diagrams.sh`，然后把图片改动 commit 回 `main`。
+
+这意味着你**可以直接在 GitHub web editor 里改 `.mmd` 文件**，workflow 帮你 render。不想在本地装 mermaid-cli 的话完全可以不装。
+
+### 为什么预渲染而不用 GitHub 自带的 Mermaid block？
+
+| | GitHub 自带 `\`\`\`mermaid` block | 预渲染 SVG（本仓库做法） |
+|---|---|---|
+| 渲染质量 | 不稳定；手机上字体 fallback、裁剪 | 像素级一致 |
+| 加载速度 | 等页面加载完再客户端渲染 | 即时（静态资源）|
+| `git clone` 后本地查看（VS Code 等）| ✅ 一般可以 | ✅ 永远可以 |
+| 嵌到别处（PPT、文档）| ❌ 只能 Mermaid 环境 | ✅ SVG/PNG 哪都能用 |
+| 仓库里有独立源文件 | ❌ 内嵌在 `.md`，diff 难看 | ✅ 独立的 `.mmd` 文件 |
+
+---
 
 ---
 
