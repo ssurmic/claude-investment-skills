@@ -9,7 +9,13 @@ name: Telegram NL Chat Handler
 
 on:
   schedule:
-    - cron: '*/5 * * * *'   # every 5 min, 24/7 (chat can happen any time)
+    # */2 = every 2 minutes (best effort).
+    # GitHub Actions advertises 5-min minimum granularity in their docs but
+    # accepts smaller intervals; in practice scheduled runs may still be
+    # delayed 5-15 min during peak load, and consecutive */2 ticks may
+    # coalesce. For true sub-second response, upgrade to webhook (see
+    # EXAMPLES.md "Future capabilities").
+    - cron: '*/2 * * * *'
   workflow_dispatch:        # manual trigger for testing
 
 permissions:
