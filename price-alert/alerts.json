@@ -77,6 +77,18 @@
       "created": "2026-05-11",
       "active": true,
       "fired": false
+    },
+    {
+      "id": "orcl-rise_intraday-xkcf5y",
+      "ticker": "ORCL",
+      "condition": {
+        "op": "rise_intraday",
+        "pct": 2
+      },
+      "note": "Set via Telegram bot",
+      "created": "2026-05-11",
+      "active": true,
+      "fired": false
     }
   ]
 }
