@@ -4,6 +4,8 @@
 
 [English version](./SETUP.md)
 
+> 💡 **两条 chat 路径说明**：这个指南配置的是 GitHub Actions polling chat 路径（延迟 2-15 分钟）。如果你**真的经常和 bot 聊**而且觉得延迟烦，先做完这个 setup，再叠加 Cloudflare Workers webhook 升级 —— 见 [SETUP-WEBHOOK-zh.md](./SETUP-WEBHOOK-zh.md)（+5 分钟，依然 $0）。
+
 ---
 
 ## 配好之后是什么效果

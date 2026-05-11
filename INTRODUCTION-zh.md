@@ -134,7 +134,7 @@ Triggers in English ("macro warning", "regime check", "is the market at peak",
 
 ## 🏗️ 完整系统怎么工作 —— 架构图（进阶）
 
-如果你启用了可选的 `price-alert` skill（Telegram bot + Anthropic API），整个系统是这样：
+如果你启用了可选的 `price-alert` skill（Telegram bot + Anthropic API），整个系统是这样。**chat 路径有两种可互换的实现**（按你要的延迟挑一个）；**价格扫描路径**永远一样。
 
 ```mermaid
 flowchart TB
@@ -145,50 +145,79 @@ flowchart TB
     User -->|"用 NL 设 alert<br/>'GLW 跌到 140 通知我'"| ClaudeCode
     User <-->|"用 NL 跟 bot 聊"| Phone
 
-    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>你的 fork)]
+    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>alerts.json = source of truth)]
 
-    Repo -->|"checkout code"| W1["⏰ Workflow #1<br/>price-alerts.yml<br/>每 15 分钟，交易时段"]
-    Repo -->|"checkout code"| W2["⏰ Workflow #2<br/>telegram-chat.yml<br/>每 5 分钟，24/7"]
+    Phone <-->|"消息"| TGAPI([📡 Telegram Bot API])
 
-    Secrets[🔐 GitHub Secrets<br/>加密: token, chat_id, api_key]
-    Secrets -.->|"注入 env vars"| W1
-    Secrets -.->|"注入 env vars"| W2
-
+    %% 价格扫描路径 —— 永远运行
+    Repo -->|"checkout"| W1["⏰ price-alerts.yml<br/>GH Actions cron<br/>每 2 min, 24/7"]
     W1 --> CheckPy[check_alerts.py]
-    W2 --> ChatPy[chat_handler.py]
-
-    CheckPy <-->|"价格"| YF([📊 Yahoo Finance API<br/>via yfinance])
-    ChatPy <-->|"getUpdates"| TGAPI([📡 Telegram Bot API])
-    ChatPy <-->|"解析 NL + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
-
+    CheckPy <-->|"价格"| YF([📊 Yahoo Finance API])
     CheckPy -->|"alert 触发:<br/>sendMessage"| TGAPI
+
+    %% Chat 路径 —— 二选一
+    TGAPI -.->|"选项 A: getUpdates pull<br/>每 2-5 分钟"| W2["⏰ telegram-chat.yml<br/>GH Actions cron<br/>延迟 2-15 min · $0"]
+    TGAPI ==>|"选项 B: HTTPS POST push<br/>即时"| Worker[["⚡ Cloudflare Worker<br/>price-alert-webhook<br/>延迟 1-3 秒 · $0"]]
+
+    W2 --> ChatPy[chat_handler.py]
+    ChatPy <-->|"NL 解析 + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
+    Worker <-->|"NL 解析 + tool use"| Claude
+
+    ChatPy -.->|"git commit alerts.json"| Repo
+    Worker -.->|"PUT alerts.json<br/>via Contents API"| Repo
+
     TGAPI -->|"推送通知"| Phone
 
-    ChatPy -.->|"commit state<br/>+ alerts.json"| Repo
+    Secrets[🔐 Secrets<br/>GH Secrets + CF Worker Secrets]
+    Secrets -.-> W1
+    Secrets -.-> W2
+    Secrets -.-> Worker
 
     classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
     classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef webhook fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
     classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
     classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
     classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
 
     class User,Phone,ClaudeCode user
     class W1,W2,CheckPy,ChatPy worker
+    class Worker webhook
     class YF,TGAPI,Claude api
     class Repo storage
     class Secrets secret
 ```
 
+### ⏱️ Webhook 为什么快 100-300 倍
+
+两条路径处理的是**同一条 Telegram 消息、同一个 Claude 模型、最终改的也是同一个 `alerts.json`**。区别只在于 **worker 进程怎么知道"有新消息要处理了"**：
+
+| 维度 | 选项 A (GH Actions polling) | 选项 B (CF Worker webhook) |
+|---|---|---|
+| 触发模型 | **Pull** —— cron 定期主动问 Telegram"有新消息吗" | **Push** —— Telegram 一收到消息立即 POST 到一个 URL |
+| 最小粒度 | 标榜 1 分钟 cron，高峰时被合并到 5-15 分钟 | 即时，无 schedule |
+| 冷启动 | 启动 Ubuntu VM (~10-30 秒) + 装 Python 依赖 (~5-10 秒) | V8 isolate (~50 毫秒，全球预热) |
+| 并发 | 串行 —— 一次跑一个 cron job | 并行 —— Workers 可同时处理几千个并发请求 |
+| 在哪跑 | Microsoft Azure 数据中心（GH Actions runners） | Cloudflare 全球 300+ 边缘节点（离用户最近的）|
+| 代码语言 | Python（`chat_handler.py`） | TypeScript（`webhook/worker.ts`） |
+| 状态存储 | 一样 —— GitHub `alerts.json`，通过 Contents API 或 `git commit` | 一样 —— GitHub `alerts.json`，通过 Contents API |
+
+**净效果**：2-15 分钟 → 1-3 秒。模型一样、alert 一样、API 调用费一样 —— 只是触发事件的传输方式不同。
+
+**类比**：polling 像每 5 分钟去信箱看一眼有没有信；webhook 像门铃响了。
+
 ### 💰 每月成本估算
 
 | 组件 | 费用 | 说明 |
 |---|---|---|
-| **GitHub Actions**（public repo）| **$0** | 免费无限分钟 |
-| **GitHub Actions**（private repo）| **~$0-$70/月** | 免费配额 2000 min/月；每次 cron ≈ 0.5-1 计费分钟。`*/5 * * * *` 24/7 ≈ 4320 min/月。保持 public 就是 $0。|
+| **GitHub repo**（public）| **$0** | 免费 —— public repo 无限 |
+| **GitHub Actions**（public repo）| **$0** | 免费无限分钟；`price-alerts.yml` 每 2 min ≈ 720 min/月 都免费 |
+| **GitHub Actions**（private repo）| **~$0-$70/月** | 免费配额 2000 min/月；每次 cron ≈ 0.5-1 计费分钟。`*/5 * * * *` 24/7 ≈ 4320 min/月。保持 public 就是 $0 |
+| **Cloudflare Workers**（可选 webhook）| **$0** | 免费层 = 10 万 req/天。个人日常用 ≈ 50-500/天 → 用了 <1% 的额度 |
 | **Telegram Bot API** | **$0** | 永久免费，没碰过 quota |
-| **Yahoo Finance**（via yfinance）| **$0** | 公开 API，不用 key |
+| **Yahoo Finance**（via yfinance + chart JSON）| **$0** | 公开 API，不用 key |
 | **Claude Code**（NL 设 alert）| **$0** | 你的 Pro/Max 订阅覆盖 |
-| **Anthropic API**（`chat_handler.py`）| **~$0.5–$5/月** | 见下面细分 |
+| **Anthropic API**（chat 路径）| **~$0.5–$5/月** | 见下面细分 —— polling 和 webhook 一样的钱 |
 
 **Anthropic API 成本细分**（Claude Sonnet 4.6 @ $3/M input, $15/M output）：
 
@@ -196,14 +225,14 @@ flowchart TB
 
 | 你的用量 | 每月费用 |
 |---|---|
-| 闲置（0 条/天）| $0 —— polling 本身不要钱，没新消息就不调 Claude |
+| 闲置（0 条/天）| $0 —— 没消息就不调 Claude（两种路径都是）|
 | 轻度（5 条/天）| ~$0.60/月 |
 | 中度（30 条/天）| ~$3.60/月 |
 | 重度（100 条/天）| ~$12/月 |
 
 **建议**：$5 充值够中度用法 ~2 个月。可以设 auto-reload（balance 低于 $5 时自动充）省心。
 
-**省钱 tip**：只有 `chat_handler.py` 调 Claude API。如果你**只要单向 alert**（不要 bot 对话），别启用 `telegram-chat.yml` —— 永远 $0。
+**省钱 tip**：只有 chat 路径（`chat_handler.py` polling 或 `webhook/worker.ts`）调 Claude API。如果你**只要单向 alert**（不要 bot 对话），整个 chat 路径都不启 —— 永远 $0。`price-alerts.yml` 价格扫描完全不碰 AI。
 
 ---
 
@@ -211,26 +240,46 @@ flowchart TB
 
 **GitHub Actions** 本质上是 **Microsoft 提供的 cron-as-a-service**（他们买了 GitHub）。它在他们数据中心**免费**按时间表跑你的 Python 脚本，**不需要自己管理服务器**。
 
-我们用它跑**两个独立任务**：
+我们最多用它跑**两个任务**：
 
 | Workflow | Cron | 干什么 | 费用 |
 |---|---|---|---|
-| `price-alerts.yml` | 每 15 分钟（美股交易时段）| 读 `alerts.json` → 拉价格 → 触发就推 Telegram | $0（public repo 免费） |
-| `telegram-chat.yml` | 每 5 分钟（24/7）| poll Telegram 新消息 → Claude API 解析 → 执行工具 → 回复 | ~$1-2/月（Anthropic API） |
+| `price-alerts.yml` | 每 2 分钟，24/7 | 读 `alerts.json` → 拉价格 → 触发就推 Telegram | $0（public repo 免费） |
+| `telegram-chat.yml`（仅选项 A）| 每 2-5 分钟，24/7 | poll Telegram 新消息 → Claude API 解析 → 执行工具 → 回复 | ~$1-2/月（Anthropic API） |
 
 每次 cron 触发，它会启动一个新的 Ubuntu 容器、装 Python 依赖、跑脚本、把状态变化 commit 回 repo、然后关闭。每次大约 30 秒。
+
+如果你选了选项 B（webhook）做 chat 路径，就关掉 `telegram-chat.yml`，由 CF Worker 处理所有 chat —— `price-alerts.yml` 继续独立运行做价格扫描。
+
+### Cloudflare Workers 做了什么（仅选项 B）
+
+**Cloudflare Workers** 是一个 serverless 平台，在 Cloudflare 全球边缘网络（~300 个 POPs）上跑 JavaScript / TypeScript。`price-alert/webhook/worker.ts` 通过 `wrangler deploy` 上传，部署完后可以从 `https://price-alert-webhook.<你的-subdomain>.workers.dev` 访问。
+
+当你的 Telegram bot 收到消息，**Telegram 不需要等 cron 轮询，而是立即 HTTP POST** 到那个 worker URL。V8 isolate 在 ~50 毫秒内启动（没有容器、没有语言运行时要加载），调 Claude、通过 GitHub Contents API 更新 `alerts.json`、回复 —— 总耗时 1-3 秒。
+
+技术细节：
+- **运行时**：V8 isolate（比 Node.js 进程轻量；和 Chrome 同款引擎）
+- **代码**：`webhook/worker.ts` 约 250 行 TypeScript
+- **部署**：`wrangler` CLI（`npm install -g wrangler`）
+- **Secrets**：`wrangler secret put NAME` —— 加密，设置后不再显示
+- **日志**：`wrangler tail` 实时流日志；CF dashboard 保留 7 天
+- **费用**：免费层 10 万 req/天。你日常用 <500/天。**好几年都免费**。
 
 ### 每个组件干啥
 
 | 组件 | 角色 | 在哪 | 谁付钱 |
 |---|---|---|---|
 | **Claude Code** | NL 设 alert + 组合分析 | 你电脑 | 免费（Pro/Max 订阅）|
-| **GitHub repo** | 配置 + 脚本的 source of truth | github.com/你/claude-investment-skills | 免费（public repo） |
-| **GitHub Secrets** | 加密凭证存储 | github.com/你/.../settings/secrets | 免费 |
-| **GitHub Actions** | Cron 调度 + Python runner | Microsoft 数据中心 | public repo 免费 |
-| **yfinance** | 拉实时股价 | Yahoo Finance API | 免费，无 key |
+| **GitHub repo** | 配置 + 脚本 + `alerts.json` 的 source of truth | github.com/你/claude-investment-skills | 免费（public repo） |
+| **GitHub Contents API** | Worker 用这个读写 `alerts.json`（PUT/GET 配 sha）| api.github.com | 免费（认证后 5000 req/小时） |
+| **GitHub Secrets** | GH Actions 的加密凭证存储 | github.com/你/.../settings/secrets | 免费 |
+| **GitHub Actions** | Cron 调度 + Python runner（价格扫描 + 选项 A chat）| Microsoft 数据中心 | public repo 免费 |
+| **Cloudflare Workers**（可选）| Serverless V8 isolate，处理 Telegram webhook POST（选项 B chat）| Cloudflare 全球 ~300 边缘节点 | 免费 10 万 req/天以内 |
+| **wrangler**（可选）| 部署 / 管理 worker + secrets 的 CLI | 你电脑（`npm install -g`）| 免费 |
+| **yfinance** | `check_alerts.py`（Python）拉实时股价 | Yahoo Finance API | 免费，无 key |
+| **Yahoo chart JSON** | Worker 直接调 `query1.finance.yahoo.com/v8/finance/chart/`（不用 Python 依赖）| Yahoo Finance API | 免费，无 key |
 | **Telegram bot** | 推送通知 + NL 聊天 | 你的 `@YourBotName_bot` | 免费 |
-| **Anthropic API** | 把 Telegram 消息解析成 tool call | api.anthropic.com | ~$1-2/月（casual 用） |
+| **Anthropic API** | 把 Telegram 消息解析成 tool call（两种 chat 路径都用） | api.anthropic.com | ~$1-2/月（casual 用） |
 
 ### 什么时候跑啥
 

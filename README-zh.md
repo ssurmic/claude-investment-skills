@@ -40,7 +40,7 @@ bash ~/.claude/skills/setup.sh
 
 ## 🏗️ 架构一览
 
-`price-alert` skill（可选 Telegram + Anthropic API 集成）的完整架构：
+`price-alert` skill（可选 Telegram + Anthropic API 集成）。chat 路径有**两种实现方式可互换** —— 按你想要的延迟挑一个：
 
 ```mermaid
 flowchart TB
@@ -51,41 +51,62 @@ flowchart TB
     User -->|"用 NL 设 alert<br/>'GLW 跌到 140 通知我'"| ClaudeCode
     User <-->|"用 NL 跟 bot 聊"| Phone
 
-    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>你的 fork)]
+    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>alerts.json = source of truth)]
 
-    Repo -->|"checkout code"| W1["⏰ Workflow #1<br/>price-alerts.yml<br/>每 15 分钟，交易时段"]
-    Repo -->|"checkout code"| W2["⏰ Workflow #2<br/>telegram-chat.yml<br/>每 5 分钟，24/7"]
+    Phone <-->|"消息"| TGAPI([📡 Telegram Bot API])
 
-    Secrets[🔐 GitHub Secrets<br/>加密: token, chat_id, api_key]
-    Secrets -.->|"注入 env vars"| W1
-    Secrets -.->|"注入 env vars"| W2
-
+    %% 价格扫描路径 —— 永远运行
+    Repo -->|"checkout"| W1["⏰ price-alerts.yml<br/>GH Actions cron<br/>每 2 min, 24/7"]
     W1 --> CheckPy[check_alerts.py]
-    W2 --> ChatPy[chat_handler.py]
-
-    CheckPy <-->|"价格"| YF([📊 Yahoo Finance API<br/>via yfinance])
-    ChatPy <-->|"getUpdates"| TGAPI([📡 Telegram Bot API])
-    ChatPy <-->|"解析 NL + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
-
+    CheckPy <-->|"价格"| YF([📊 Yahoo Finance API])
     CheckPy -->|"alert 触发:<br/>sendMessage"| TGAPI
+
+    %% Chat 路径 —— 二选一
+    TGAPI -.->|"选项 A: getUpdates pull<br/>每 2-5 分钟"| W2["⏰ telegram-chat.yml<br/>GH Actions cron<br/>延迟 2-15 min · $0"]
+    TGAPI ==>|"选项 B: HTTPS POST push<br/>即时"| Worker[["⚡ Cloudflare Worker<br/>price-alert-webhook<br/>延迟 1-3 秒 · $0"]]
+
+    W2 --> ChatPy[chat_handler.py]
+    ChatPy <-->|"NL 解析 + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
+    Worker <-->|"NL 解析 + tool use"| Claude
+
+    ChatPy -.->|"git commit alerts.json"| Repo
+    Worker -.->|"PUT alerts.json<br/>via Contents API"| Repo
+
     TGAPI -->|"推送通知"| Phone
 
-    ChatPy -.->|"commit state<br/>+ alerts.json"| Repo
+    Secrets[🔐 Secrets<br/>GH Secrets + CF Worker Secrets]
+    Secrets -.-> W1
+    Secrets -.-> W2
+    Secrets -.-> Worker
 
     classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
     classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef webhook fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
     classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
     classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
     classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
 
     class User,Phone,ClaudeCode user
     class W1,W2,CheckPy,ChatPy worker
+    class Worker webhook
     class YF,TGAPI,Claude api
     class Repo storage
     class Secrets secret
 ```
 
-**每月费用估算**：如果跳过可选的 Telegram chat bot = **$0**；中度用 bidirectional NL chat ~$1-4/月（Anthropic API）。GitHub Actions 在 public repo 永远免费。完整成本细分见 [INTRODUCTION-zh.md](./INTRODUCTION-zh.md#-每月成本估算)。
+**两条 chat 路径，效果相同 —— 延迟不同**：
+
+| | 选项 A: GitHub Actions polling | 选项 B: Cloudflare Worker webhook |
+|---|---|---|
+| **模型** | Pull（cron 主动去问"有新消息吗"）| Push（Telegram 即时把消息推过来）|
+| **延迟** | 2-15 分钟 | 1-3 秒 |
+| **冷启动** | Ubuntu VM ~10-30 秒 | V8 isolate ~50 毫秒 |
+| **配置耗时** | 10 分钟（[SETUP-zh.md](./price-alert/SETUP-zh.md)）| 上面基础上 +5 分钟（[SETUP-WEBHOOK-zh.md](./price-alert/SETUP-WEBHOOK-zh.md)）|
+| **费用** | $0 | $0（CF 免费层 10 万 req/天）|
+
+先用选项 A。如果你**真的经常和 bot 聊**而且觉得 2-15 分钟延迟烦，再升级到 webhook。
+
+**每月费用估算**：跳过可选的 Telegram chat bot = **$0**；中度 NL chat ~$1-4/月（Anthropic API，**两种路径一样的钱** —— Claude 调用本身一样）。完整成本细分见 [INTRODUCTION-zh.md](./INTRODUCTION-zh.md#-每月成本估算)。
 
 每个组件的详细工作机制见 [INTRODUCTION-zh.md → 完整系统怎么工作](./INTRODUCTION-zh.md#-完整系统怎么工作--架构图进阶)。
 

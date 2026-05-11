@@ -14,14 +14,24 @@ price-alert/
 ├── SKILL.md              # this file
 ├── alerts.json           # active alert definitions (committed to git)
 ├── alerts_fired.log      # append-only history of triggered alerts
-└── scripts/
-    ├── add_alert.py      # add new alert
-    ├── list_alerts.py    # list all / active / fired
-    ├── cancel_alert.py   # cancel by id, ticker, or --all
-    └── check_alerts.py   # run by GitHub Actions cron, sends Telegram
+├── scripts/
+│   ├── add_alert.py      # add new alert
+│   ├── list_alerts.py    # list all / active / fired
+│   ├── cancel_alert.py   # cancel by id, ticker, or --all
+│   ├── check_alerts.py   # run by GitHub Actions cron, sends Telegram
+│   └── chat_handler.py   # Option A chat path: poll Telegram + tool-use via Claude API
+└── webhook/              # OPTIONAL Option B chat path (Cloudflare Worker)
+    ├── worker.ts         # TypeScript webhook handler (mirrors chat_handler.py)
+    └── wrangler.toml     # CF Worker deploy config
 ```
 
-The actual checking happens in **GitHub Actions** (`.github/workflows/price-alerts.yml`), which runs `check_alerts.py` every 15 minutes during US trading hours and pushes Telegram notifications for any triggered alerts.
+Price scanning runs in **GitHub Actions** (`.github/workflows/price-alerts.yml`), which executes `check_alerts.py` every 2 minutes 24/7 and pushes Telegram notifications for any triggered alerts.
+
+The bidirectional NL **chat path has two interchangeable implementations** — pick one per the latency you want:
+- **Option A (default)**: `telegram-chat.yml` GH Actions cron polls Telegram every 2-5 min, runs `chat_handler.py`. Latency 2-15 min. $0. Setup: [SETUP.md](./SETUP.md).
+- **Option B (optional upgrade)**: Cloudflare Worker (`webhook/worker.ts`) receives Telegram webhook POSTs and processes instantly. Latency 1-3 sec. Still $0 (CF free tier 100k req/day). Setup: [SETUP-WEBHOOK.md](./SETUP-WEBHOOK.md) on top of basic SETUP.
+
+Both paths use the same Anthropic API and end up modifying the same `alerts.json` via GitHub. They are not used together — Option B replaces Option A entirely once you enable it.
 
 ## Decision tree
 

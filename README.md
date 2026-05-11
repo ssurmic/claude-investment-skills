@@ -40,7 +40,7 @@ analyze NVDA          # not /analyze-stock — natural language works
 
 ## 🏗️ Architecture at a glance
 
-For the `price-alert` skill (optional Telegram + Anthropic API integration):
+For the `price-alert` skill (optional Telegram + Anthropic API integration). The chat path has **two interchangeable implementations** — pick one based on the latency you want:
 
 ```mermaid
 flowchart TB
@@ -51,41 +51,62 @@ flowchart TB
     User -->|"set alerts via NL<br/>'GLW 跌到 140 通知我'"| ClaudeCode
     User <-->|"chat in NL with bot"| Phone
 
-    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>your fork)]
+    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>alerts.json = source of truth)]
 
-    Repo -->|"checkout code"| W1["⏰ Workflow #1<br/>price-alerts.yml<br/>every 15min, mkt-hrs"]
-    Repo -->|"checkout code"| W2["⏰ Workflow #2<br/>telegram-chat.yml<br/>every 5min, 24/7"]
+    Phone <-->|"messages"| TGAPI([📡 Telegram Bot API])
 
-    Secrets[🔐 GitHub Secrets<br/>encrypted: token, chat_id, api_key]
-    Secrets -.->|"inject env vars"| W1
-    Secrets -.->|"inject env vars"| W2
-
+    %% Price scan path — always on
+    Repo -->|"checkout"| W1["⏰ price-alerts.yml<br/>GH Actions cron<br/>every 2min, 24/7"]
     W1 --> CheckPy[check_alerts.py]
-    W2 --> ChatPy[chat_handler.py]
-
-    CheckPy <-->|"prices"| YF([📊 Yahoo Finance API<br/>via yfinance])
-    ChatPy <-->|"getUpdates"| TGAPI([📡 Telegram Bot API])
-    ChatPy <-->|"parse NL + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
-
+    CheckPy <-->|"prices"| YF([📊 Yahoo Finance API])
     CheckPy -->|"alert fired:<br/>sendMessage"| TGAPI
+
+    %% Chat path — pick ONE
+    TGAPI -.->|"Option A: getUpdates pull<br/>every 2-5 min"| W2["⏰ telegram-chat.yml<br/>GH Actions cron<br/>latency 2-15 min · $0"]
+    TGAPI ==>|"Option B: HTTPS POST push<br/>instant"| Worker[["⚡ Cloudflare Worker<br/>price-alert-webhook<br/>latency 1-3 sec · $0"]]
+
+    W2 --> ChatPy[chat_handler.py]
+    ChatPy <-->|"NL parse + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
+    Worker <-->|"NL parse + tool use"| Claude
+
+    ChatPy -.->|"git commit alerts.json"| Repo
+    Worker -.->|"PUT alerts.json<br/>via Contents API"| Repo
+
     TGAPI -->|"push notification"| Phone
 
-    ChatPy -.->|"commit state<br/>+ alerts.json"| Repo
+    Secrets[🔐 Secrets<br/>GH Secrets + CF Worker Secrets]
+    Secrets -.-> W1
+    Secrets -.-> W2
+    Secrets -.-> Worker
 
     classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
     classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef webhook fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
     classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
     classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
     classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
 
     class User,Phone,ClaudeCode user
     class W1,W2,CheckPy,ChatPy worker
+    class Worker webhook
     class YF,TGAPI,Claude api
     class Repo storage
     class Secrets secret
 ```
 
-**Monthly cost estimate**: $0 if you skip the optional Telegram chat bot; ~$1-4/mo for moderate use of bidirectional NL chat via Anthropic API. GitHub Actions is free on public repos. Full breakdown in [INTRODUCTION.md](./INTRODUCTION.md#-what-this-costs-you-per-month).
+**Two chat paths, same outcome — different latency**:
+
+| | Option A: GitHub Actions polling | Option B: Cloudflare Worker webhook |
+|---|---|---|
+| **Model** | Pull (cron asks "any new msgs?") | Push (Telegram delivers msg instantly) |
+| **Latency** | 2-15 min | 1-3 sec |
+| **Cold start** | Ubuntu VM ~10-30 sec | V8 isolate ~50 ms |
+| **Setup time** | 10 min ([SETUP.md](./price-alert/SETUP.md)) | +5 min on top ([SETUP-WEBHOOK.md](./price-alert/SETUP-WEBHOOK.md)) |
+| **Cost** | $0 | $0 (CF free tier = 100k req/day) |
+
+Start with Option A. Upgrade to webhook only if you actively chat with the bot and the 2-15 min delay annoys you.
+
+**Monthly cost estimate**: $0 if you skip the optional Telegram chat bot; ~$1-4/mo for moderate use of bidirectional NL chat via Anthropic API (same cost regardless of which chat path you pick — the API call is identical). Full breakdown in [INTRODUCTION.md](./INTRODUCTION.md#-what-this-costs-you-per-month).
 
 For a full deep-dive into how each piece works, see [INTRODUCTION.md → How it all works](./INTRODUCTION.md#-how-it-all-works--full-architecture-advanced).
 

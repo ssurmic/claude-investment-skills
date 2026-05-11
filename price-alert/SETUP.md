@@ -4,6 +4,8 @@
 
 [中文版 / Chinese version](./SETUP-zh.md)
 
+> 💡 **Two-chat-path note**: This guide sets up the GitHub Actions polling chat path (latency 2-15 min). If you actively chat with the bot and want sub-3-second responses, run this setup first, then layer the Cloudflare Workers webhook upgrade on top — see [SETUP-WEBHOOK.md](./SETUP-WEBHOOK.md) (+5 min, still $0).
+
 ---
 
 ## What you'll have when this is done

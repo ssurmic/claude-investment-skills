@@ -135,7 +135,7 @@ The full mapping is in [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md).
 
 ## 🏗️ How it all works — full architecture (advanced)
 
-If you enable the optional `price-alert` skill with Telegram bot + Anthropic API, here's the complete system:
+If you enable the optional `price-alert` skill with Telegram bot + Anthropic API, here's the complete system. The **chat path has two interchangeable implementations** (pick one based on the latency you want); the **price scan path** is always the same.
 
 ```mermaid
 flowchart TB
@@ -146,50 +146,79 @@ flowchart TB
     User -->|"set alerts via NL<br/>'GLW 跌到 140 通知我'"| ClaudeCode
     User <-->|"chat in NL with bot"| Phone
 
-    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>your fork)]
+    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>alerts.json = source of truth)]
 
-    Repo -->|"checkout code"| W1["⏰ Workflow #1<br/>price-alerts.yml<br/>every 15min, mkt-hrs"]
-    Repo -->|"checkout code"| W2["⏰ Workflow #2<br/>telegram-chat.yml<br/>every 5min, 24/7"]
+    Phone <-->|"messages"| TGAPI([📡 Telegram Bot API])
 
-    Secrets[🔐 GitHub Secrets<br/>encrypted: token, chat_id, api_key]
-    Secrets -.->|"inject env vars"| W1
-    Secrets -.->|"inject env vars"| W2
-
+    %% Price scan path — always on
+    Repo -->|"checkout"| W1["⏰ price-alerts.yml<br/>GH Actions cron<br/>every 2min, 24/7"]
     W1 --> CheckPy[check_alerts.py]
-    W2 --> ChatPy[chat_handler.py]
-
-    CheckPy <-->|"prices"| YF([📊 Yahoo Finance API<br/>via yfinance])
-    ChatPy <-->|"getUpdates"| TGAPI([📡 Telegram Bot API])
-    ChatPy <-->|"parse NL + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
-
+    CheckPy <-->|"prices"| YF([📊 Yahoo Finance API])
     CheckPy -->|"alert fired:<br/>sendMessage"| TGAPI
+
+    %% Chat path — pick ONE of the two
+    TGAPI -.->|"Option A: getUpdates pull<br/>every 2-5 min"| W2["⏰ telegram-chat.yml<br/>GH Actions cron<br/>latency 2-15 min · $0"]
+    TGAPI ==>|"Option B: HTTPS POST push<br/>instant"| Worker[["⚡ Cloudflare Worker<br/>price-alert-webhook<br/>latency 1-3 sec · $0"]]
+
+    W2 --> ChatPy[chat_handler.py]
+    ChatPy <-->|"NL parse + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
+    Worker <-->|"NL parse + tool use"| Claude
+
+    ChatPy -.->|"git commit alerts.json"| Repo
+    Worker -.->|"PUT alerts.json<br/>via Contents API"| Repo
+
     TGAPI -->|"push notification"| Phone
 
-    ChatPy -.->|"commit state<br/>+ alerts.json"| Repo
+    Secrets[🔐 Secrets<br/>GH Secrets + CF Worker Secrets]
+    Secrets -.-> W1
+    Secrets -.-> W2
+    Secrets -.-> Worker
 
     classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
     classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef webhook fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
     classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
     classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
     classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
 
     class User,Phone,ClaudeCode user
     class W1,W2,CheckPy,ChatPy worker
+    class Worker webhook
     class YF,TGAPI,Claude api
     class Repo storage
     class Secrets secret
 ```
 
+### ⏱️ Why the webhook is 100-300x faster
+
+Both paths route the same Telegram message through the same Claude model and end up modifying the same `alerts.json`. They differ only in **how the worker process learns there's a new message to handle**:
+
+| Dimension | Option A (GH Actions polling) | Option B (CF Worker webhook) |
+|---|---|---|
+| Trigger model | **Pull** — cron periodically asks Telegram "any new msgs?" | **Push** — Telegram POSTs to a URL the moment a msg arrives |
+| Min granularity | Cron advertised as 1-min, coalesced to 5-15 min during peak | Instant, no schedule |
+| Cold start | Spin up Ubuntu VM (~10-30 sec) + install Python deps (~5-10 sec) | V8 isolate (~50 ms, globally warm) |
+| Concurrency | Serial — one cron job at a time | Parallel — Workers can handle thousands of concurrent invocations |
+| Where it runs | Microsoft Azure data centers (GH Actions runners) | Cloudflare's 300+ edge POPs (closest to user) |
+| Code language | Python (`chat_handler.py`) | TypeScript (`webhook/worker.ts`) |
+| State storage | Same — `alerts.json` in GitHub via Contents API or `git commit` | Same — `alerts.json` in GitHub via Contents API |
+
+**Net effect**: 2-15 minutes → 1-3 seconds. Same model, same alerts, same cost — just a different transport for the trigger event.
+
+**Analogy**: polling is checking your mailbox every 5 minutes; webhook is the doorbell ringing.
+
 ### 💰 What this costs you per month
 
 | Component | Cost | Notes |
 |---|---|---|
-| **GitHub Actions** (public repo) | **$0** | Unlimited free minutes |
+| **GitHub repo** (public) | **$0** | Free — public repos are unlimited |
+| **GitHub Actions** (public repo) | **$0** | Unlimited free minutes; `price-alerts.yml` every 2 min ≈ 720 min/mo runs free |
 | **GitHub Actions** (private repo) | **~$0-$70/mo** | 2000 free min/mo; each cron tick ≈ 0.5-1 billable min. `*/5 * * * *` 24/7 ≈ 4320 min/mo. Stay public to keep $0. |
+| **Cloudflare Workers** (optional webhook) | **$0** | Free tier = 100,000 requests/day. Personal use ≈ 50-500/day → uses <1% of quota |
 | **Telegram Bot API** | **$0** | Always free, no quotas hit |
-| **Yahoo Finance** (via yfinance) | **$0** | Public API, no key |
+| **Yahoo Finance** (via yfinance + chart JSON) | **$0** | Public API, no key |
 | **Claude Code** (NL alert setup) | **$0** | Covered by your Pro/Max sub |
-| **Anthropic API** (`chat_handler.py`) | **~$0.5–$5/mo** | See breakdown below |
+| **Anthropic API** (chat path) | **~$0.5–$5/mo** | See breakdown below — cost is identical whether you use polling or webhook |
 
 **Anthropic API cost breakdown** (Claude Sonnet 4.6 @ $3/M input, $15/M output):
 
@@ -197,14 +226,14 @@ Per Telegram message processed: ~700 input + ~150 output tokens = **~$0.004 per 
 
 | Your usage | Monthly cost |
 |---|---|
-| Idle (0 msgs/day) | $0 — polling itself costs nothing, no Claude call when no new messages |
+| Idle (0 msgs/day) | $0 — no msgs = no Claude calls (both paths) |
 | Light (5 msgs/day) | ~$0.60/mo |
 | Moderate (30 msgs/day) | ~$3.60/mo |
 | Heavy (100 msgs/day) | ~$12/mo |
 
 **Recommendation**: $5 credit deposit covers ~2 months at moderate usage. Set up auto-reload at $5 trigger if you want it to never run out.
 
-**Cost-saving tip**: only the `chat_handler.py` workflow uses Claude API. If you only want one-way price alerts (no bot conversations), don't enable `telegram-chat.yml` — your cost stays $0 forever.
+**Cost-saving tip**: only the chat path (whether `chat_handler.py` polling or `webhook/worker.ts`) uses the Claude API. If you only want one-way price alerts (no bot conversations), skip the chat path entirely — your cost stays $0 forever. The `price-alerts.yml` price scanner has zero AI involvement.
 
 ---
 
@@ -212,26 +241,46 @@ Per Telegram message processed: ~700 input + ~150 output tokens = **~$0.004 per 
 
 **GitHub Actions** is essentially **cron-as-a-service from Microsoft** (they own GitHub). It runs your Python scripts on a schedule in their data centers, for free, with no server to manage.
 
-We use it for **two separate jobs**:
+We use it for **up to two jobs**:
 
 | Workflow | Cron | What it does | Cost |
 |---|---|---|---|
-| `price-alerts.yml` | every 15 min during US market hours | check `alerts.json` → fetch prices → if triggered, push to Telegram | $0 (free public repo) |
-| `telegram-chat.yml` | every 5 min, 24/7 | poll Telegram for new messages → Claude API parses → execute tool → reply | ~$1-2/mo Anthropic API |
+| `price-alerts.yml` | every 2 min, 24/7 | check `alerts.json` → fetch prices → if triggered, push to Telegram | $0 (free public repo) |
+| `telegram-chat.yml` (Option A only) | every 2-5 min, 24/7 | poll Telegram for new messages → Claude API parses → execute tool → reply | ~$1-2/mo Anthropic API |
 
 Each run spins up a fresh Ubuntu container, installs Python deps, runs the script, commits state changes back to the repo, then shuts down. Total runtime per tick ≈ 30 seconds.
+
+If you pick Option B (webhook) for the chat path, you disable `telegram-chat.yml` and CF Workers handles all chat — `price-alerts.yml` keeps running independently for the price scan.
+
+### What Cloudflare Workers does (Option B only)
+
+**Cloudflare Workers** is a serverless platform that runs JavaScript / TypeScript on Cloudflare's global edge network (~300 POPs worldwide). The `worker.ts` code in `price-alert/webhook/` is uploaded via `wrangler deploy` and reachable at `https://price-alert-webhook.<your-subdomain>.workers.dev`.
+
+When Telegram receives a message in your bot, instead of having to wait for a polling cron, Telegram **immediately POSTs an HTTP request** to that worker URL. The V8 isolate boots in ~50 ms (no container, no language runtime to load), calls Claude, updates `alerts.json` via the GitHub Contents API, and replies — all within 1-3 seconds total.
+
+Tech details:
+- **Runtime**: V8 isolate (lighter than a Node.js process; same engine as Chrome)
+- **Code**: ~250 lines of TypeScript in `webhook/worker.ts`
+- **Deployment**: `wrangler` CLI (`npm install -g wrangler`)
+- **Secrets**: `wrangler secret put NAME` — encrypted, never visible after set
+- **Logs**: `wrangler tail` streams real-time logs; CF dashboard keeps 7 days
+- **Cost**: 100,000 requests/day free. You use <500/day. Free for years.
 
 ### What each component does
 
 | Component | Role | Where it lives | Who pays |
 |---|---|---|---|
 | **Claude Code** | NL alert setup + portfolio analysis | Your laptop | Free w/ Pro/Max sub |
-| **GitHub repo** | Source of truth for config + scripts | github.com/YOU/claude-investment-skills | Free (public repo) |
-| **GitHub Secrets** | Encrypted credential store | github.com/YOU/.../settings/secrets | Free |
-| **GitHub Actions** | Cron scheduler + Python runner | Microsoft data centers | Free for public repos |
-| **yfinance** | Pulls live stock prices | Yahoo Finance API | Free, no API key |
+| **GitHub repo** | Source of truth for config + scripts + `alerts.json` | github.com/YOU/claude-investment-skills | Free (public repo) |
+| **GitHub Contents API** | Worker uses this to read/write `alerts.json` (PUT/GET with sha) | api.github.com | Free (5000 req/hr authenticated) |
+| **GitHub Secrets** | Encrypted credential store for GH Actions | github.com/YOU/.../settings/secrets | Free |
+| **GitHub Actions** | Cron scheduler + Python runner (price scan + Option A chat) | Microsoft data centers | Free for public repos |
+| **Cloudflare Workers** (optional) | Serverless V8 isolate handling Telegram webhook POSTs (Option B chat) | Cloudflare edge POPs (~300 worldwide) | Free up to 100k req/day |
+| **wrangler** (optional) | CLI for deploying / managing worker + secrets | Your laptop (via `npm install -g`) | Free |
+| **yfinance** | Pulls live stock prices in `check_alerts.py` (Python) | Yahoo Finance API | Free, no API key |
+| **Yahoo chart JSON** | Worker fetches prices directly from `query1.finance.yahoo.com/v8/finance/chart/` (no Python dep) | Yahoo Finance API | Free, no API key |
 | **Telegram bot** | Push notifications + NL chat | Your `@YourBotName_bot` | Free |
-| **Anthropic API** | Parses Telegram messages into tool calls | api.anthropic.com | ~$1-2/mo casual |
+| **Anthropic API** | Parses Telegram messages into tool calls (used by both chat paths) | api.anthropic.com | ~$1-2/mo casual |
 
 ### What runs when
 
