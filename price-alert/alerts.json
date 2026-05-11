@@ -118,6 +118,18 @@
       "created_price": 13.568599700927734,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "nok-below_ma_50-c261a5",
+      "ticker": "NOK",
+      "condition": {
+        "op": "below_ma_50"
+      },
+      "note": "NOK T2 \u52a0\u4ed3 \u2014 50DMA \u8dcc\u7834\uff08\u6df1\u5ea6\u56de\u8c03\u673a\u4f1a\uff09",
+      "created": "2026-05-11",
+      "created_price": 13.664999961853027,
+      "active": true,
+      "fired": false
     }
   ]
 }
