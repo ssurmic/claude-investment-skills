@@ -181,6 +181,32 @@
       "created_price": 322.0,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "hlit-below-2e8a4c",
+      "ticker": "HLIT",
+      "condition": {
+        "op": "below",
+        "threshold": 13.5
+      },
+      "note": "HLIT T1 \u5165\u573a \u2014 Q1 +19% beat / backlog $582M (+87%) / DOCSIS 4.0 \u5546\u7528 ramp\uff0c\u7b49 $14.60 \u76d8\u540e\u9ad8\u4f4d\u56de\u8e29",
+      "created": "2026-05-11",
+      "created_price": 14.6,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "hlit-below-5f3b91",
+      "ticker": "HLIT",
+      "condition": {
+        "op": "below",
+        "threshold": 11.5
+      },
+      "note": "HLIT T2 \u52a0\u4ed3 \u2014 \u6df1\u8c03\u673a\u4f1a\uff08\u63a5\u8fd1 200DMA $9.94 + cushion\uff0cCharter/Comcast capex \u62c5\u5fe7\u5165\u573a\uff09",
+      "created": "2026-05-11",
+      "created_price": 14.6,
+      "active": true,
+      "fired": false
     }
   ]
 }
