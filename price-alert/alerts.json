@@ -142,6 +142,45 @@
       "created_price": 193.52999877929688,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "powl-below-7a3f12",
+      "ticker": "POWL",
+      "condition": {
+        "op": "below",
+        "threshold": 280
+      },
+      "note": "POWL T1 \u5165\u573a \u2014 \u56de\u8e29 5/8 base\uff08$1.8B backlog + $400M data center mega \u8ba2\u5355\uff09",
+      "created": "2026-05-11",
+      "created_price": 322.0,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "powl-below-9b4e23",
+      "ticker": "POWL",
+      "condition": {
+        "op": "below",
+        "threshold": 250
+      },
+      "note": "POWL T2 \u52a0\u4ed3 \u2014 \u8fdb\u4e00\u6b65\u6df1\u8c03\uff08\u8ddd 50DMA \u7f13\u51b2 + founder \u5356 \u70b9 post-split equiv\uff09",
+      "created": "2026-05-11",
+      "created_price": 322.0,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "powl-rise_intraday-3c8d67",
+      "ticker": "POWL",
+      "condition": {
+        "op": "rise_intraday",
+        "pct": 5
+      },
+      "note": "POWL \u5355\u65e5\u66b4\u6da8 5%+ \u2014 \u770b\u662f\u5426\u53c8\u6709\u65b0 hyperscaler \u8ba2\u5355\u516c\u544a",
+      "created": "2026-05-11",
+      "created_price": 322.0,
+      "active": true,
+      "fired": false
     }
   ]
 }
