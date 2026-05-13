@@ -95,7 +95,10 @@
       "note": "Set via Telegram bot",
       "created": "2026-05-11",
       "active": true,
-      "fired": false
+      "fired": true,
+      "fired_at_utc": "2026-05-13T18:41:49.461295+00:00",
+      "fired_at_price": 190.5800018310547,
+      "fired_reason": "intraday rise 2.0% from prev close $186.83 (threshold: +2%)"
     },
     {
       "id": "orcl-below-jo113x",
