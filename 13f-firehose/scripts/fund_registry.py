@@ -49,6 +49,14 @@ FUNDS: List[Fund] = [
         blurb="NVDA's own 13F — they show their hand on AI ecosystem bets",
         priority=1,
     ),
+    Fund(
+        cik=2488,
+        name="Advanced Micro Devices (AMD)",
+        manager="Corp. Strategic Investments",
+        tag="CORP",
+        blurb="AMD's own 13F — concentrated bets on SANM + ABSI + MRVL + XANADU (Q1 2026)",
+        priority=1,
+    ),
 
     # === Legendary value / activist ===
     Fund(
