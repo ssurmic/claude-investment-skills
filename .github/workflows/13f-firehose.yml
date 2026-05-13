@@ -1,0 +1,80 @@
+name: 13F Firehose (Famous Funds Daily)
+
+# Daily scan for new 13F-HR filings from a curated list of famous funds
+# (Leopold/Situational Awareness, Berkshire, Pershing Square, NVIDIA Corp, etc.).
+#
+# 13F-HR is filed quarterly, within 45 days of quarter-end:
+#   Q1 → May 15      Q2 → Aug 14      Q3 → Nov 14      Q4 → Feb 14
+#
+# Filings appear throughout the deadline week. Most large funds file 2-3 days
+# before the deadline (creating a flurry on Feb 12-14, May 13-15, etc.).
+#
+# We run TWICE daily on weekdays to catch same-day filings:
+#   - 21:00 UTC = 5 PM ET  (catches filings up through market close + 1h)
+#   - 01:00 UTC = 9 PM ET  (catches late-day post-market filings)
+# SEC EDGAR doesn't accept weekend submissions, so we skip Sat/Sun.
+#
+# State dedup is via committed state.json (per-fund last-seen accession).
+
+on:
+  schedule:
+    # Twice daily, weekdays only
+    - cron: '0 21 * * 1-5'  # 5 PM ET / 21:00 UTC (4 PM during DST)
+    - cron: '0 1 * * 2-6'   # 9 PM ET / 01:00 UTC next day (catches late filings)
+  workflow_dispatch:
+    inputs:
+      priority_max:
+        description: 'Only scan funds with priority <= this (1=top, 3=all)'
+        required: false
+        default: '3'
+      force_rescan:
+        description: 'Re-emit alerts even for already-seen accessions'
+        required: false
+        default: 'false'
+      test_mode:
+        description: 'Test mode (print to log, do NOT send Telegram)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write  # to commit state file back
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet 'requests>=2.31'
+
+      - name: Run 13F scanner
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          PRIORITY_MAX:       ${{ inputs.priority_max || '3' }}
+          FORCE_RESCAN:       ${{ inputs.force_rescan == 'true' && '1' || '' }}
+          TEST_MODE:          ${{ inputs.test_mode == 'true' && '1' || '' }}
+          EDGAR_USER_AGENT:   "ssurmiczizhao@gmail.com 13f-firehose/1.0 (ci)"
+        run: |
+          python 13f-firehose/scripts/13f_firehose.py
+
+      - name: Commit updated state (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain 13f-firehose/scripts/state.json)" ]]; then
+            git add 13f-firehose/scripts/state.json
+            git commit -m "13f-firehose: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git push
+          else
+            echo "No state changes to commit."
+          fi
