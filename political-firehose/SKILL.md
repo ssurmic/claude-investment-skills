@@ -32,8 +32,9 @@ Edit `scripts/politician_registry.py` to add/remove.
 
 ## Cron
 
-Twice daily, weekdays only:
-- `14:00 UTC` (10 AM ET) — morning
+Three times daily, weekdays only:
+- `13:00 UTC` ( 9 AM ET) — catches overnight + pre-market OGE filings
+- `17:00 UTC` ( 1 PM ET) — mid-day
 - `21:00 UTC` ( 5 PM ET) — post-close
 
 ## Manual run

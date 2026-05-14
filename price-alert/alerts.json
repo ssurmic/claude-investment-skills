@@ -289,6 +289,32 @@
       "note": "\u5356 1/3 \u2014 take-profit ladder \u7b2c1\u6863\u3002Gamma squeeze \u4e2d (5/13 ATH $14.83 \u2192 AH $15.42)\u3002NVDA + Anduril + JPM PT \u20ac12 + Argus Buy/$15\u3002\u6ce8\u610f 5/15 OPEX \u540e\u56de\u8c03\u98ce\u9669\uff0c\u5230\u4e86\u5c31\u5356",
       "created": "2026-05-13",
       "created_price": 14.710000038146973,
+      "active": false,
+      "fired": false
+    },
+    {
+      "id": "nok-below-2adb56",
+      "ticker": "NOK",
+      "condition": {
+        "op": "below",
+        "threshold": 14.0
+      },
+      "note": "OPEX hangover \u7b2c\u4e00\u6ce2 \u2014 \u52a0\u4ed3 1/3 \u4e70\u56de\u3002 = \u5fc3\u7406\u6574\u6570 + 6/18 put wall 32K OI + 6/18 max pain \u5171\u632f\u3002\u4eca\u5929\u5356\u4e86 1/3@$15+\uff0c\u8fd9\u662f\u56de\u4e70\u7b2c\u4e00\u6863\u3002",
+      "created": "2026-05-13",
+      "created_price": 14.710000038146973,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "nok-below-c32bb7",
+      "ticker": "NOK",
+      "condition": {
+        "op": "below",
+        "threshold": 13.2
+      },
+      "note": "Gap fill + max pain \u5171\u632f \u2014 \u518d\u52a0 1/3\u3002$13.17 = 5/13 gap \u8d77\u70b9 (\u4eca\u5929 gap up \u7f3a\u53e3) + 5/22 max pain + 5/15 max pain\u3002\u6280\u672f+\u671f\u6743\u4e09\u91cd\u5171\u632f\uff0c\u6700\u7406\u60f3 buy-back \u4f4d\u3002",
+      "created": "2026-05-13",
+      "created_price": 14.710000038146973,
       "active": true,
       "fired": false
     }
