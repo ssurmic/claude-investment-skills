@@ -1,0 +1,86 @@
+name: Political Trade Firehose
+
+# Monitors congressional STOCK Act PTRs (Senate + House) and executive OGE 278-T filings.
+#
+# Disclosure windows:
+#   STOCK Act (Congress): must disclose within 45 days of transaction
+#   OGE Form 278-T (Executive): must disclose within 30-45 days
+#
+# We run THREE times daily on weekdays — OGE filings can arrive at any time:
+#   13:00 UTC =  9 AM ET — catches overnight + pre-market filings
+#   17:00 UTC =  1 PM ET — catches morning batch
+#   21:00 UTC =  5 PM ET — catches afternoon/post-close filings
+#
+# Senate data: community S3 aggregate (no WAF, updated daily)
+# House data:  disclosures-clerk.house.gov XML + PDF parsing (poppler)
+# OGE data:    extapps2.oge.gov PDF portal (pdfplumber)
+
+on:
+  schedule:
+    - cron: '0 13 * * 1-5'   #  9 AM ET / 13:00 UTC
+    - cron: '0 17 * * 1-5'   #  1 PM ET / 17:00 UTC
+    - cron: '0 21 * * 1-5'   #  5 PM ET / 21:00 UTC
+  workflow_dispatch:
+    inputs:
+      priority_max:
+        description: 'Max priority level to alert (1=top tier, 2=all tracked)'
+        required: false
+        default: '2'
+      days_back:
+        description: 'How many days back to scan for new trades'
+        required: false
+        default: '3'
+      force_rescan:
+        description: 'Re-emit already-seen trades (for testing)'
+        required: false
+        default: 'false'
+      test_mode:
+        description: 'Print to log only, do NOT send Telegram'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write   # to commit state.json back
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install system deps (poppler for House PTR PDF parsing)
+        run: sudo apt-get install -y poppler-utils
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install --quiet 'requests>=2.31' 'pdfplumber>=0.11' 'beautifulsoup4>=4.12'
+
+      - name: Run Political Firehose
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          PRIORITY_MAX:       ${{ inputs.priority_max || '2' }}
+          DAYS_BACK:          ${{ inputs.days_back || '3' }}
+          FORCE_RESCAN:       ${{ inputs.force_rescan == 'true' && '1' || '' }}
+          TEST_MODE:          ${{ inputs.test_mode == 'true' && '1' || '' }}
+        run: |
+          python political-firehose/scripts/political_firehose.py
+
+      - name: Commit updated state (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain political-firehose/scripts/state.json)" ]]; then
+            git add political-firehose/scripts/state.json
+            git commit -m "political-firehose: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git push
+          else
+            echo "No state changes."
+          fi
