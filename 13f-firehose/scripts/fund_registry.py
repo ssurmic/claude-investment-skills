@@ -152,6 +152,14 @@ FUNDS: List[Fund] = [
 
     # === Macro / global ===
     Fund(
+        cik=1536411,
+        name="Duquesne Family Office",
+        manager="Stanley Druckenmiller",
+        tag="MACRO",
+        blurb="Druckenmiller's family office — legendary macro trader, Soros alumni, no losing year in 30 yrs",
+        priority=1,
+    ),
+    Fund(
         cik=1029160,
         name="Soros Fund Management",
         manager="Soros family office (post-Quantum)",
