@@ -121,11 +121,16 @@ The most common misconception: "GitHub Actions is the engine." **It is not.** Gi
 │  │  │   ├── option_walls.py                                        │ │
 │  │  │   └── max_pain.py                                            │ │
 │  │  │                                                              │ │
-│  │  └── price-alert/                                               │ │
-│  │      ├── alerts.json              ← config file. Edited by      │ │
-│  │      │                               you OR by the bot (chat).  │ │
-│  │      └── scripts/check_alerts.py  ← NOT run locally;            │ │
-│  │                                      runs on GitHub Actions.    │ │
+│  │  ├── price-alert/                                               │ │
+│  │  │   ├── alerts.json              ← config file. Edited by      │ │
+│  │  │   │                               you OR by the bot (chat).  │ │
+│  │  │   └── scripts/check_alerts.py  ← NOT run locally;            │ │
+│  │  │                                   runs on GitHub Actions.    │ │
+│  │  │                                                              │ │
+│  │  └── political-firehose/scripts/                               │ │
+│  │      ├── political_firehose.py    ← runs on GitHub Actions     │ │
+│  │      ├── oge_watcher.py              OGE 278-T PDF parsing      │ │
+│  │      └── congress_watcher.py         STOCK Act PTR parsing      │ │
 │  └──────────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────────┘
               │ git push (when you add/cancel alerts, or commit changes)
@@ -141,6 +146,11 @@ The most common misconception: "GitHub Actions is the engine." **It is not.** Gi
 │   │   → reads alerts.json → fetches prices from Yahoo                   │
 │   │   → if a condition matches → POSTs to Telegram. That's it.          │
 │   │   (no AI in this loop. Pure Python `if price <= threshold`.)         │
+│   │                                                                      │
+│   ├── political-firehose.yml  3×/day (9/13/17 UTC), weekdays            │
+│   │   → scans OGE portal (White House) + House XML (Congress)           │
+│   │   → parses PDFs → extracts trades → pushes Telegram                 │
+│   │   (pure Python, no AI — only fires for tracked officials)            │
 │   │                                                                      │
 │   └── telegram-chat.yml  every 2-5 min  (ONLY if using Option A chat)   │
 │       → poll Telegram → call Anthropic Claude → modify alerts.json      │
@@ -186,7 +196,7 @@ This trips people up because the SAME data is computed in TWO different places d
 
 ---
 
-## 🔥 Three discovery firehoses — *catch the next ticker before Twitter does*
+## 🔥 Four discovery channels — *catch the next ticker before Twitter does*
 
 ### The problem this solves
 
@@ -257,13 +267,59 @@ The longest fuse. SK Telecom's $200M PIPE Preferred filing on 8-K Item 3.02 sat 
 
 ---
 
-### The three firehoses
+#### Case 4: Political official trade monitor — White House + Congress, mandatory disclosure windows
 
-| Firehose | What it watches | What it discovers |
+Federal law requires all government officials to disclose trades within **30-45 days**. That window sits **days to weeks ahead** of Twitter/CNBC coverage.
+
+> **Trump Q1 2026**: 3,642 trades in a single quarter (MSFT $5M–$25M buy · VANGUARD $5M–$25M sell · NVDA/ORCL/META buys). The 278-T was filed with OGE on **5/8/2026** — our script caught it **same day**. CNBC analysis came **2 days later**.
+
+> **Rep. John McGuire (R-VA)**: Bought AAPL + MSFT + NVDA on 5/13/2026. House PTR filed same day — **Telegram alert by 9 AM**.
+
+![Political official trade monitor](diagrams/timeline-political-en.svg)
+
+| Source | Date | Trades | Lag from disclosure |
+|---|---|---|---|
+| **OGE 278-T filed (Trump Q1 2026)** | 2026-05-08 | MSFT $5M–$25M buy, VIG $5M–$25M sell, **ORCL $1M–$5M buy** (3/17), NVDA $1M–$5M buy | **0 days** (script same day) |
+| **House PTR filed (McGuire)** | 2026-05-13 | AAPL + MSFT + NVDA buys | **0 days** (9 AM alert) |
+| Media begins covering 278-T | 2026-05-10 | — | +2 days |
+| Twitter viral "$MSFT White House buying" | 2026-05-14 | — | +6 days |
+
+**Telegram alert format (OGE 278-T — objective mandatory disclosure data, not investment advice):**
+
+```
+🏛 OGE 278-T  ⚡ NEW FILING
+
+👤 Donald J. Trump  🔴 R
+🎯 President of the United States
+🗓 Filed: 5/8/2026  |  2,707 transactions (2,415 buys / 292 sells)
+
+🟢 TOP BUYS (2,415 total):
+  🟢 MSFT  Microsoft Corp       $5M–$25M  3/17/2026
+  🟢 NVDA  Nvidia Corp          $1M–$5M   2/10/2026
+  🟢 ORCL  Oracle Corp          $1M–$5M   3/17/2026
+  🟢 HOOD  Robinhood Markets    $1M–$5M   2/10/2026
+  _...+2,411 more buys_
+
+🔴 TOP SELLS (292 total):
+  🔴 VIG   Vanguard Div ETF     $5M–$25M
+  🔴 META  Meta Platforms       $5M–$25M
+  _...+290 more sells_
+
+📎 OGE 278-T PDF →  https://extapps2.oge.gov/...
+```
+
+**Tracked officials (12)**: Trump · Bessent (Treasury) · Lutnick (Commerce) · Tuberville · Kelly · Sullivan · Whitehouse · Pelosi · Austin Scott · Crenshaw · McCaul · Gottheimer
+
+---
+
+### The four alpha channels
+
+| Channel | What it watches | What it discovers |
 |---|---|---|
 | **`insider-firehose`** | SEC Form 4 atom feed | Officer/director open-market buys ≥ $200k (Code "P" only, no RSU vests) |
 | **`strategic-partner-firehose`** | SEC 8-K + SC 13D atom feeds | **Path A**: Named Tier-1 strategic partners (NVIDIA, MSFT, SK Telecom, Samsung, MGX, PIF, …). **Path B**: Theme classifier catches anonymous-hyperscaler deals like POWL |
-| **`composite.py`** (shared) | The above two firehoses' alert logs | Same ticker fires both within 30 days → 🚨🚨🚨 **MEGA SIGNAL** (rare, < 1% of alerts) |
+| **`political-firehose`** | OGE Form 278-T (White House) + STOCK Act PTR (Congress) | 12 tracked officials' stock trades — 0-day alerts vs. 2–14 day Twitter lag |
+| **`composite.py`** (shared) | The above firehoses' alert logs | Same ticker fires two channels within 30 days → 🚨🚨🚨 **MEGA SIGNAL** (rare, < 1% of alerts) |
 
 ### How you use it
 

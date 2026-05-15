@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 500" width="920" height="500">
   <defs>
     <style>
-      text { font-family: 'PingFang SC','Microsoft YaHei',system-ui,sans-serif; }
+      text { font-family: system-ui,'Segoe UI',sans-serif; }
       .mono { font-family: 'Courier New',Courier,monospace; }
     </style>
   </defs>
@@ -11,21 +11,21 @@
 
   <!-- Title -->
   <text x="460" y="28" font-size="14" font-weight="bold" fill="#111827" text-anchor="middle">
-    政治官员交易监控 —— 强制披露窗口里的 alpha
+    Political Official Trade Monitor — alpha leaking through mandatory disclosure windows
   </text>
 
   <!-- ═══ Column header boxes ═══ -->
-  <!-- OGE 白宫: amber -->
+  <!-- OGE White House: amber -->
   <rect x="18"  y="42" width="260" height="34" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
-  <text x="148" y="64" font-size="12" font-weight="bold" fill="#92400e" text-anchor="middle">🏛 OGE 白宫（Trump Q1 2026）</text>
+  <text x="148" y="64" font-size="11.5" font-weight="bold" fill="#92400e" text-anchor="middle">🏛 OGE White House (Trump Q1 2026)</text>
 
-  <!-- 国会: blue -->
+  <!-- Congress: blue -->
   <rect x="330" y="42" width="262" height="34" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
-  <text x="461" y="64" font-size="12" font-weight="bold" fill="#1e40af" text-anchor="middle">🏛 国会 STOCK Act（McGuire 5/13）</text>
+  <text x="461" y="64" font-size="11.5" font-weight="bold" fill="#1e40af" text-anchor="middle">🏛 Congress STOCK Act (McGuire 5/13)</text>
 
-  <!-- 散户: gray -->
+  <!-- Retail: gray -->
   <rect x="644" y="42" width="260" height="34" rx="5" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
-  <text x="774" y="64" font-size="12" font-weight="bold" fill="#6b7280" text-anchor="middle">散户发现（天·周 之后）</text>
+  <text x="774" y="64" font-size="11.5" font-weight="bold" fill="#6b7280" text-anchor="middle">Retail Discovery (days · weeks later)</text>
 
   <!-- ═══ Timeline axis ═══ -->
   <line x1="40" y1="136" x2="892" y2="136" stroke="#374151" stroke-width="1.5"/>
@@ -34,17 +34,17 @@
   <!-- Tick: Q1 2026 -->
   <line x1="88"  y1="129" x2="88"  y2="143" stroke="#92400e" stroke-width="2"/>
   <text x="88"  y="125" font-size="10" fill="#92400e" text-anchor="middle">Q1 2026</text>
-  <text x="88"  y="113" font-size="9"  fill="#9ca3af" text-anchor="middle">（1–3 月）</text>
+  <text x="88"  y="113" font-size="9"  fill="#9ca3af" text-anchor="middle">(Jan–Mar)</text>
 
   <!-- Tick: 05-08 OGE -->
   <line x1="258" y1="129" x2="258" y2="143" stroke="#b45309" stroke-width="2"/>
   <text x="258" y="125" font-size="10" fill="#b45309" text-anchor="middle">05-08</text>
-  <text x="258" y="113" font-size="9"  fill="#9ca3af" text-anchor="middle">278-T 提交</text>
+  <text x="258" y="113" font-size="9"  fill="#9ca3af" text-anchor="middle">278-T filed</text>
 
-  <!-- Tick: 05-10 媒体 (dashed) -->
+  <!-- Tick: 05-10 media (dashed) -->
   <line x1="456" y1="129" x2="456" y2="143" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4,3"/>
   <text x="456" y="125" font-size="10" fill="#7c3aed" text-anchor="middle">05-10</text>
-  <text x="456" y="113" font-size="9"  fill="#9ca3af" text-anchor="middle">媒体报道</text>
+  <text x="456" y="113" font-size="9"  fill="#9ca3af" text-anchor="middle">Media covers</text>
 
   <!-- Tick: 05-13 House PTR -->
   <line x1="618" y1="129" x2="618" y2="143" stroke="#1d4ed8" stroke-width="2"/>
@@ -54,71 +54,71 @@
   <!-- Tick: 05-14 Twitter (dashed) -->
   <line x1="788" y1="129" x2="788" y2="143" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4,3"/>
   <text x="788" y="125" font-size="10" fill="#9ca3af" text-anchor="middle">05-14</text>
-  <text x="788" y="113" font-size="9"  fill="#9ca3af" text-anchor="middle">Twitter 热议</text>
+  <text x="788" y="113" font-size="9"  fill="#9ca3af" text-anchor="middle">Twitter viral</text>
 
   <!-- ═══ OGE event box (amber light) ═══ -->
   <rect x="18" y="152" width="260" height="138" rx="5" fill="#fffbeb" stroke="#f59e0b" stroke-width="1"/>
-  <text x="148" y="169" font-size="10" font-weight="bold" fill="#92400e" text-anchor="middle">⚡ script 当天抓到 2,707 笔</text>
-  <text x="148" y="182" font-size="9"  fill="#9ca3af"   text-anchor="middle">OGE 强制 30–45 天内披露</text>
+  <text x="148" y="169" font-size="10" font-weight="bold" fill="#92400e" text-anchor="middle">⚡ Script caught 2,707 trades same day</text>
+  <text x="148" y="182" font-size="9"  fill="#9ca3af"   text-anchor="middle">OGE mandates 30–45 day disclosure</text>
 
   <text x="34" y="200" class="mono" font-size="9.5" fill="#374151">🟢 MSFT  Microsoft Corp     $5M–$25M</text>
   <text x="34" y="215" class="mono" font-size="9.5" fill="#374151">🟢 NVDA  Nvidia Corp        $1M–$5M</text>
   <text x="34" y="230" class="mono" font-size="9.5" fill="#15803d" font-weight="bold">🟢 ORCL  Oracle Corp        $1M–$5M ★</text>
-  <text x="34" y="242" class="mono" font-size="8.5" fill="#9ca3af">          3/17/2026 买入</text>
+  <text x="34" y="242" class="mono" font-size="8.5" fill="#9ca3af">          purchased 3/17/2026</text>
   <text x="34" y="257" class="mono" font-size="9.5" fill="#374151">🟢 HOOD  Robinhood Markets  $1M–$5M</text>
   <text x="34" y="272" class="mono" font-size="9.5" fill="#dc2626">🔴 VIG   Vanguard Div ETF   $5M–$25M</text>
   <text x="34" y="287" class="mono" font-size="9.5" fill="#dc2626">🔴 META  Meta Platforms     $5M–$25M</text>
 
   <!-- ═══ Congress event box (blue light) ═══ -->
   <rect x="486" y="152" width="256" height="100" rx="5" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
-  <text x="614" y="169" font-size="10" font-weight="bold" fill="#1e40af" text-anchor="middle">⚡ 当天早 9 点 Telegram 推送</text>
-  <text x="614" y="182" font-size="9"  fill="#9ca3af"    text-anchor="middle">众议员 John McGuire（R-VA）</text>
+  <text x="614" y="169" font-size="10" font-weight="bold" fill="#1e40af" text-anchor="middle">⚡ Telegram alert at 9 AM same day</text>
+  <text x="614" y="182" font-size="9"  fill="#9ca3af"    text-anchor="middle">Rep. John McGuire (R-VA)</text>
 
   <text x="502" y="200" class="mono" font-size="9.5" fill="#374151">🟢 AAPL  Apple Inc          $1K–$15K</text>
   <text x="502" y="215" class="mono" font-size="9.5" fill="#374151">🟢 MSFT  Microsoft Corp     $1K–$15K</text>
   <text x="502" y="230" class="mono" font-size="9.5" fill="#374151">🟢 NVDA  NVIDIA Corporation $1K–$15K</text>
-  <text x="502" y="244" font-size="8.5" fill="#9ca3af">  PTR 同日提交 → 即时抓取</text>
+  <text x="502" y="244" font-size="8.5" fill="#9ca3af">  PTR filed same day → immediate capture</text>
 
   <!-- Media box (dashed purple) -->
   <rect x="396" y="152" width="80" height="50" rx="5" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1" stroke-dasharray="4,2"/>
   <text x="436" y="170" font-size="9" fill="#7c3aed" text-anchor="middle">CNBC · WSJ</text>
-  <text x="436" y="183" font-size="9" fill="#7c3aed" text-anchor="middle">开始解读</text>
-  <text x="436" y="197" font-size="9" fill="#dc2626" text-anchor="middle">+2 天滞后</text>
+  <text x="436" y="183" font-size="9" fill="#7c3aed" text-anchor="middle">coverage</text>
+  <text x="436" y="197" font-size="9" fill="#dc2626" text-anchor="middle">+2 day lag</text>
 
   <!-- Twitter box (dashed gray) -->
   <rect x="700" y="152" width="196" height="50" rx="5" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" stroke-dasharray="4,2"/>
-  <text x="798" y="170" font-size="9" fill="#6b7280" text-anchor="middle">"$MSFT 白宫大量加仓"</text>
-  <text x="798" y="183" font-size="9" fill="#6b7280" text-anchor="middle">Twitter 爆款推文</text>
-  <text x="798" y="197" font-size="9" fill="#dc2626" text-anchor="middle">+6 天滞后</text>
+  <text x="798" y="170" font-size="9" fill="#6b7280" text-anchor="middle">"$MSFT White House buying"</text>
+  <text x="798" y="183" font-size="9" fill="#6b7280" text-anchor="middle">Twitter goes viral</text>
+  <text x="798" y="197" font-size="9" fill="#dc2626" text-anchor="middle">+6 day lag</text>
 
   <!-- ═══ Telegram preview panel ═══ -->
   <rect x="18" y="308" width="884" height="176" rx="7" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
   <rect x="18" y="308" width="884" height="26" rx="7" fill="#f3f4f6"/>
   <rect x="18" y="320" width="884" height="14" fill="#f3f4f6"/>
-  <text x="36" y="325" font-size="10" font-weight="bold" fill="#b45309">📱 Telegram 推送格式（法定披露数据 · 非投资建议）</text>
+  <text x="36" y="325" font-size="10" font-weight="bold" fill="#b45309">📱 Telegram alert format (mandatory public disclosure data · not investment advice)</text>
 
   <!-- Vertical divider -->
   <line x1="460" y1="336" x2="460" y2="478" stroke="#e5e7eb" stroke-width="1"/>
 
   <!-- LEFT: OGE message -->
-  <text x="36" y="350" font-size="8.5" fill="#9ca3af">OGE 278-T（白宫 · 内阁）</text>
+  <text x="36" y="350" font-size="8.5" fill="#9ca3af">OGE 278-T (White House / Cabinet)</text>
   <text x="36" y="365" class="mono" font-size="9.5" fill="#111827" font-weight="bold">🏛 OGE 278-T  ⚡ NEW FILING</text>
   <text x="36" y="379" class="mono" font-size="9"   fill="#374151">👤 Donald J. Trump  🔴 R</text>
   <text x="36" y="392" class="mono" font-size="9"   fill="#6b7280">🎯 President of the United States</text>
-  <text x="36" y="405" class="mono" font-size="9"   fill="#6b7280">🗓 Filed: 5/8/2026  |  2,707 笔（2,415买/292卖）</text>
-  <text x="36" y="419" class="mono" font-size="9"   fill="#9ca3af">🟢 TOP BUYS（2,415 笔）:</text>
+  <text x="36" y="405" class="mono" font-size="9"   fill="#6b7280">🗓 Filed: 5/8/2026  |  2,707 (2,415 buys / 292 sells)</text>
+  <text x="36" y="419" class="mono" font-size="9"   fill="#9ca3af">🟢 TOP BUYS (2,415 total):</text>
   <text x="36" y="432" class="mono" font-size="9"   fill="#374151">  🟢 MSFT  Microsoft Corp  $5M–$25M  3/17</text>
   <text x="36" y="445" class="mono" font-size="9"   fill="#374151">  🟢 NVDA  Nvidia Corp     $1M–$5M   2/10</text>
   <text x="36" y="458" class="mono" font-size="9"   fill="#15803d" font-weight="bold">  🟢 ORCL  Oracle Corp     $1M–$5M   3/17  ★</text>
   <text x="36" y="471" class="mono" font-size="9"   fill="#374151">  🟢 HOOD  Robinhood       $1M–$5M   2/10</text>
 
   <!-- RIGHT: Congress message -->
-  <text x="476" y="350" font-size="8.5" fill="#9ca3af">STOCK Act PTR（国会）</text>
+  <text x="476" y="350" font-size="8.5" fill="#9ca3af">STOCK Act PTR (Congress)</text>
   <text x="476" y="365" class="mono" font-size="9.5" fill="#111827" font-weight="bold">🏛 STOCK Act PTR  ⚡ NEW FILING</text>
   <text x="476" y="379" class="mono" font-size="9"   fill="#374151">👤 Rep. John McGuire  🔴 R-VA</text>
   <text x="476" y="392" class="mono" font-size="9"   fill="#6b7280">🎯 U.S. House of Representatives</text>
-  <text x="476" y="405" class="mono" font-size="9"   fill="#6b7280">🗓 Filed: 2026-05-13  |  3 笔交易</text>
-  <text x="476" y="419" class="mono" font-size="9"   fill="#9ca3af">（法定强制披露 · 非投资建议）</text>
+  <text x="476" y="405" class="mono" font-size="9"   fill="#6b7280">🗓 Filed: 2026-05-13  |  3 transactions</text>
+  <text x="476" y="419" class="mono" font-size="9"   fill="#9ca3af">(mandatory public disclosure · not investment advice)</text>
   <text x="476" y="432" class="mono" font-size="9"   fill="#374151">  🟢 AAPL  Apple Inc    $1K–$15K  2026-05-13</text>
   <text x="476" y="445" class="mono" font-size="9"   fill="#374151">  🟢 MSFT  Microsoft   $1K–$15K  2026-05-13</text>
   <text x="476" y="458" class="mono" font-size="9"   fill="#374151">  🟢 NVDA  NVIDIA      $1K–$15K  2026-05-13</text>
