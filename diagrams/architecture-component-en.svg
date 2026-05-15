@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 660" width="920" height="660">
+  <defs>
+    <style>
+      text { font-family: system-ui,'Segoe UI',sans-serif; }
+      .mono { font-family: 'Courier New',Courier,monospace; }
+    </style>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#6b7280"/>
+    </marker>
+    <marker id="arr2" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto">
+      <polygon points="8 0, 0 3, 8 6" fill="#6b7280"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="920" height="660" fill="#ffffff" rx="10" stroke="#e5e7eb" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="460" y="26" font-size="14" font-weight="bold" fill="#111827" text-anchor="middle">Component map — what runs where (read this first)</text>
+  <text x="460" y="42" font-size="10" fill="#9ca3af" text-anchor="middle">Common misconception: "GitHub Actions is the engine." It's not. Thinking runs on your laptop. GitHub is just storage + cron.</text>
+
+  <!-- ═══ BOX 1: YOUR LAPTOP ═══ -->
+  <rect x="18" y="54" width="884" height="292" rx="7" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <rect x="18" y="54" width="884" height="30" rx="7" fill="#3b82f6"/>
+  <rect x="18" y="70" width="884" height="14" fill="#3b82f6"/>
+  <text x="36" y="74" font-size="12" font-weight="bold" fill="#ffffff">💻  YOUR LAPTOP  —  where the "thinking" happens; all AI runs here</text>
+
+  <!-- Claude Code inner box -->
+  <rect x="36" y="92" width="848" height="44" rx="5" fill="#2563eb" stroke="#1d4ed8" stroke-width="1"/>
+  <text x="56" y="110" font-size="11" font-weight="bold" fill="#ffffff">💬 Claude Code (cli or IDE)</text>
+  <text x="56" y="126" font-size="9.5" fill="#bfdbfe">← the AI brain. Reads your natural-language input, matches it against SKILL.md descriptions, picks the right skill, runs it</text>
+
+  <!-- Arrow down -->
+  <line x1="460" y1="136" x2="460" y2="150" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Skills folder inner box -->
+  <rect x="36" y="152" width="848" height="182" rx="5" fill="#f8faff" stroke="#93c5fd" stroke-width="1"/>
+  <text x="56" y="170" font-size="10" font-weight="bold" fill="#1e40af" class="mono">~/.claude/skills/  (THIS REPO, cloned here)</text>
+
+  <!-- Left column: skill list -->
+  <text x="62" y="188" font-size="9.5" fill="#374151" class="mono">├── analyze-stock/SKILL.md    ← methodology + decision tree</text>
+  <text x="62" y="202" font-size="9.5" fill="#374151" class="mono">├── earnings-prep/SKILL.md       (markdown instructions</text>
+  <text x="62" y="216" font-size="9.5" fill="#374151" class="mono">├── macro-warning/SKILL.md         Claude follows verbatim)</text>
+  <text x="62" y="230" font-size="9.5" fill="#374151" class="mono">├── ... 14 skills total ...</text>
+  <text x="62" y="244" font-size="9.5" fill="#374151" class="mono">│</text>
+  <text x="62" y="258" font-size="9.5" fill="#374151" class="mono">├── review-investment-screenshot/scripts/</text>
+  <text x="62" y="272" font-size="9.5" fill="#374151" class="mono">│   ├── insider_ratio.py    ← Python helpers</text>
+  <text x="62" y="286" font-size="9.5" fill="#374151" class="mono">│   ├── quote_pull.py          Claude EXECUTES</text>
+  <text x="62" y="300" font-size="9.5" fill="#374151" class="mono">│   └── option_walls.py · max_pain.py</text>
+
+  <!-- Right column divider -->
+  <line x1="490" y1="176" x2="490" y2="326" stroke="#dbeafe" stroke-width="1"/>
+  <text x="504" y="188" font-size="9.5" fill="#374151" class="mono">├── price-alert/</text>
+  <text x="504" y="202" font-size="9.5" fill="#374151" class="mono">│   ├── alerts.json       ← config file</text>
+  <text x="504" y="216" font-size="9.5" fill="#b45309" class="mono">│   └── check_alerts.py   ← NOT run locally ↓</text>
+  <text x="504" y="230" font-size="9.5" fill="#374151" class="mono">│</text>
+  <text x="504" y="244" font-size="9.5" fill="#374151" class="mono">└── political-firehose/scripts/</text>
+  <text x="504" y="258" font-size="9.5" fill="#374151" class="mono">    ├── political_firehose.py</text>
+  <text x="504" y="272" font-size="9.5" fill="#b45309" class="mono">    ├── oge_watcher.py     ← NOT run locally ↓</text>
+  <text x="504" y="286" font-size="9.5" fill="#b45309" class="mono">    └── congress_watcher.py   GitHub Actions</text>
+  <text x="504" y="310" font-size="9" fill="#6b7280">(these scripts live here but run remotely, triggered by cron)</text>
+
+  <!-- ═══ git push arrow ═══ -->
+  <line x1="460" y1="346" x2="460" y2="380" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)" stroke-dasharray="5,3"/>
+  <rect x="365" y="352" width="190" height="20" rx="3" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="460" y="366" font-size="10" fill="#6b7280" text-anchor="middle">git push (when you commit changes)</text>
+
+  <!-- ═══ BOX 2: GITHUB ═══ -->
+  <rect x="18" y="384" width="884" height="188" rx="7" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.5"/>
+  <rect x="18" y="384" width="884" height="30" rx="7" fill="#f59e0b"/>
+  <rect x="18" y="400" width="884" height="14" fill="#f59e0b"/>
+  <text x="36" y="404" font-size="12" font-weight="bold" fill="#ffffff">🐙  GITHUB  —  small role: storage + cron.  No AI here.</text>
+
+  <!-- Repo section -->
+  <rect x="36" y="420" width="200" height="42" rx="4" fill="#fef3c7" stroke="#fbbf24" stroke-width="1"/>
+  <text x="48" y="436" font-size="10" font-weight="bold" fill="#92400e">📦 Repo</text>
+  <text x="48" y="452" font-size="9" fill="#374151" class="mono">alerts.json  ← source of truth</text>
+
+  <!-- GitHub Actions section -->
+  <rect x="248" y="420" width="636" height="142" rx="4" fill="#fffbeb" stroke="#fbbf24" stroke-width="1"/>
+  <text x="264" y="438" font-size="10" font-weight="bold" fill="#92400e">⏰ GitHub Actions cron-as-a-service (free for public repos)</text>
+
+  <!-- price-alerts.yml -->
+  <rect x="264" y="446" width="180" height="50" rx="3" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="274" y="462" font-size="9" font-weight="bold" fill="#374151">price-alerts.yml</text>
+  <text x="274" y="475" font-size="8.5" fill="#6b7280">every 2 min, 24/7</text>
+  <text x="274" y="488" font-size="8.5" fill="#9ca3af">Yahoo → if/else → Telegram</text>
+
+  <!-- political-firehose.yml -->
+  <rect x="456" y="446" width="200" height="50" rx="3" fill="#ffffff" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="466" y="462" font-size="9" font-weight="bold" fill="#92400e">political-firehose.yml  ✨</text>
+  <text x="466" y="475" font-size="8.5" fill="#6b7280">3×/day (9/13/17 UTC), weekdays</text>
+  <text x="466" y="488" font-size="8.5" fill="#9ca3af">OGE + House XML → PDF → Telegram</text>
+
+  <!-- telegram-chat.yml -->
+  <rect x="668" y="446" width="200" height="50" rx="3" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="678" y="462" font-size="9" font-weight="bold" fill="#374151">telegram-chat.yml</text>
+  <text x="678" y="475" font-size="8.5" fill="#9ca3af">optional, Option A chat only</text>
+  <text x="678" y="488" font-size="8.5" fill="#9ca3af">poll → Claude API → alerts.json</text>
+
+  <!-- No AI labels -->
+  <text x="354" y="510" font-size="8.5" fill="#9ca3af" text-anchor="middle">pure Python</text>
+  <text x="354" y="522" font-size="8.5" fill="#9ca3af" text-anchor="middle">no AI</text>
+  <text x="556" y="510" font-size="8.5" fill="#9ca3af" text-anchor="middle">pure Python</text>
+  <text x="556" y="522" font-size="8.5" fill="#9ca3af" text-anchor="middle">no AI</text>
+  <text x="768" y="510" font-size="8.5" fill="#9ca3af" text-anchor="middle">calls Claude API</text>
+  <text x="768" y="522" font-size="8.5" fill="#9ca3af" text-anchor="middle">(optional)</text>
+
+  <!-- ═══ HTTPS POST arrow ═══ -->
+  <line x1="460" y1="572" x2="460" y2="606" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="460" y1="572" x2="460" y2="606" stroke="#6b7280" stroke-width="2" marker-start="url(#arr2)"/>
+  <rect x="348" y="578" width="224" height="20" rx="3" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="460" y="592" font-size="10" fill="#6b7280" text-anchor="middle">HTTPS POST (Telegram delivers / receives)</text>
+
+  <!-- ═══ BOX 3: TELEGRAM ═══ -->
+  <rect x="18" y="608" width="884" height="42" rx="7" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="36" y="629" font-size="12" font-weight="bold" fill="#0369a1">✈  TELEGRAM  —  notifications + bot chat. Telegram's servers. Free forever. Your @YourBot_bot</text>
+  <text x="856" y="629" font-size="9" fill="#0284c7" text-anchor="middle">$0/mo</text>
+
+  <!-- Labels -->
+  <rect x="840" y="62" width="54" height="18" rx="3" fill="#dbeafe"/>
+  <text x="867" y="75" font-size="8.5" fill="#1e40af" text-anchor="middle" font-weight="bold">AI here</text>
+  <rect x="840" y="392" width="54" height="18" rx="3" fill="#fef3c7"/>
+  <text x="867" y="405" font-size="8.5" fill="#92400e" text-anchor="middle">no AI</text>
+</svg>
