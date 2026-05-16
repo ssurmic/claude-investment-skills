@@ -322,6 +322,58 @@
       "fired": false
     },
     {
+      "id": "spxc-below-e7f3a1",
+      "ticker": "SPXC",
+      "condition": {
+        "op": "below",
+        "threshold": 190
+      },
+      "note": "SPXC T1 入场 — EPS 拐点 $5.23→$9.05 (+73%), data center 冷却 backlog $755M (+38%), OlympusMAX 3 个 hyperscaler 客户锁定多年. Forward PE 22x, 分析师 low $210 附近买有折扣",
+      "created": "2026-05-15",
+      "created_price": 200.99,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "spxc-below-b2c8d4",
+      "ticker": "SPXC",
+      "condition": {
+        "op": "below",
+        "threshold": 175
+      },
+      "note": "SPXC T2 加仓 — 深调入场, 接近 200DMA $145 + 52周前低区域. 数据中心收入 $350M 2026 guidance 不变则估值更便宜",
+      "created": "2026-05-15",
+      "created_price": 200.99,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "spxc-above-9a5c71",
+      "ticker": "SPXC",
+      "condition": {
+        "op": "above",
+        "threshold": 246
+      },
+      "note": "SPXC ATH 突破 — 52周高点 $246.68 突破 = 重新定价完成. 分析师中位目标 $267, B. Riley $280, JPM $270. 确认加仓或持续持有",
+      "created": "2026-05-15",
+      "created_price": 200.99,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "spxc-drop_intraday-3d6e82",
+      "ticker": "SPXC",
+      "condition": {
+        "op": "drop_intraday",
+        "pct": 5
+      },
+      "note": "SPXC 单日暴跌 5% — 可能有 peak data center 担忧或 tariff 新闻, 结合 backlog 判断是否加仓机会",
+      "created": "2026-05-15",
+      "created_price": 200.99,
+      "active": true,
+      "fired": false
+    },
+    {
       "id": "nok-call-entry-5f2a91",
       "ticker": "NOK",
       "condition": {
