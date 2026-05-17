@@ -845,6 +845,32 @@
       "created_price": 63.2,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "oklo-below-7963f4",
+      "ticker": "OKLO",
+      "condition": {
+        "op": "below",
+        "threshold": 55
+      },
+      "note": "OKLO T1 买入区 $55 (跌破50DMA + 现支撑) | SMR/Sam Altman支持",
+      "created": "2026-05-16",
+      "created_price": 62.25,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "oklo-below-d94ed4",
+      "ticker": "OKLO",
+      "condition": {
+        "op": "below",
+        "threshold": 42
+      },
+      "note": "OKLO T2 加仓区 $42 (向52周低$34.88靠拢的深度回调)",
+      "created": "2026-05-16",
+      "created_price": 62.25,
+      "active": true,
+      "fired": false
     }
   ]
 }
