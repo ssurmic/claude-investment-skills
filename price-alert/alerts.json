@@ -871,6 +871,84 @@
       "created_price": 62.25,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "mrvl-below-d946ee",
+      "ticker": "MRVL",
+      "condition": {
+        "op": "below",
+        "threshold": 150
+      },
+      "note": "MRVL T1 $150 (-15%) - 财报后回调入场 / AI网络弹性桥",
+      "created": "2026-05-17",
+      "created_price": 176.89,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "mrvl-below-c092e2",
+      "ticker": "MRVL",
+      "condition": {
+        "op": "below",
+        "threshold": 120
+      },
+      "note": "MRVL T2 $120 (-32%) - 深度回调加仓",
+      "created": "2026-05-17",
+      "created_price": 176.89,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "alab-below-07d6b5",
+      "ticker": "ALAB",
+      "condition": {
+        "op": "below",
+        "threshold": 180
+      },
+      "note": "ALAB T1 $180 (-23%) - 高Beta铲子股 / PCIe Retimer龙头",
+      "created": "2026-05-17",
+      "created_price": 232.68,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "alab-below-9624cc",
+      "ticker": "ALAB",
+      "condition": {
+        "op": "below",
+        "threshold": 140
+      },
+      "note": "ALAB T2 $140 (-40%) - 深度回调，符合高Beta特性",
+      "created": "2026-05-17",
+      "created_price": 232.68,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "csco-below-ab97be",
+      "ticker": "CSCO",
+      "condition": {
+        "op": "below",
+        "threshold": 100
+      },
+      "note": "CSCO T1 $100 (-15%) - 估值不对称AI受益者 / 高股息+FCF",
+      "created": "2026-05-17",
+      "created_price": 118.21,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "csco-below-bd7ece",
+      "ticker": "CSCO",
+      "condition": {
+        "op": "below",
+        "threshold": 88
+      },
+      "note": "CSCO T2 $88 (-26%) - 深度回调，防御性叠加AI弹性",
+      "created": "2026-05-17",
+      "created_price": 118.21,
+      "active": true,
+      "fired": false
     }
   ]
 }
