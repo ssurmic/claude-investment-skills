@@ -702,6 +702,123 @@
       "created_price": 1049.23,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "on-below-b515fc",
+      "ticker": "ON",
+      "condition": {
+        "op": "below",
+        "threshold": 100
+      },
+      "note": "ON 进入T1买入区 $100 (SST/SiC)",
+      "created": "2026-05-16",
+      "created_price": 113.11,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "on-below-8a9eba",
+      "ticker": "ON",
+      "condition": {
+        "op": "below",
+        "threshold": 88
+      },
+      "note": "ON T2加仓区 $88 (SST/SiC)",
+      "created": "2026-05-16",
+      "created_price": 113.11,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "vrt-below-b553c4",
+      "ticker": "VRT",
+      "condition": {
+        "op": "below",
+        "threshold": 300
+      },
+      "note": "VRT 进入T1买入区 $300 (NVIDIA 800VDC)",
+      "created": "2026-05-16",
+      "created_price": 370.94,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "vrt-below-4dcee2",
+      "ticker": "VRT",
+      "condition": {
+        "op": "below",
+        "threshold": 250
+      },
+      "note": "VRT T2加仓区 $250",
+      "created": "2026-05-16",
+      "created_price": 370.94,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "ifnny-below-2db1a6",
+      "ticker": "IFNNY",
+      "condition": {
+        "op": "below",
+        "threshold": 65
+      },
+      "note": "IFNNY 进入T1买入区 $65 (欧洲SiC龙头)",
+      "created": "2026-05-16",
+      "created_price": 75.52,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "wolf-below-81d0ce",
+      "ticker": "WOLF",
+      "condition": {
+        "op": "below",
+        "threshold": 40
+      },
+      "note": "WOLF 深回调T1 $40 (高风险事件驱动)",
+      "created": "2026-05-16",
+      "created_price": 62.13,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "mpwr-below-d562f9",
+      "ticker": "MPWR",
+      "condition": {
+        "op": "below",
+        "threshold": 1300
+      },
+      "note": "MPWR T1买入区 $1300 (NVIDIA 800VDC)",
+      "created": "2026-05-16",
+      "created_price": 1550.02,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "enph-below-99a0dd",
+      "ticker": "ENPH",
+      "condition": {
+        "op": "below",
+        "threshold": 38
+      },
+      "note": "ENPH FOMO退去后T1 $38 (IQ SST故事)",
+      "created": "2026-05-16",
+      "created_price": 51.0,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "sedg-below-2c7287",
+      "ticker": "SEDG",
+      "condition": {
+        "op": "below",
+        "threshold": 35
+      },
+      "note": "SEDG T1买入区 $35 (turnaround故事)",
+      "created": "2026-05-16",
+      "created_price": 50.0,
+      "active": true,
+      "fired": false
     }
   ]
 }
