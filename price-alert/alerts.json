@@ -949,6 +949,58 @@
       "created_price": 118.21,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "uuuu-below-bb7c9e",
+      "ticker": "UUUU",
+      "condition": {
+        "op": "below",
+        "threshold": 15
+      },
+      "note": "UUUU T1 $15 (-18%) - 美国本土铀矿+稀土+$910M现金",
+      "created": "2026-05-17",
+      "created_price": 18.41,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "uuuu-below-158dbf",
+      "ticker": "UUUU",
+      "condition": {
+        "op": "below",
+        "threshold": 12
+      },
+      "note": "UUUU T2 $12 (-35%) - 深度回调加仓",
+      "created": "2026-05-17",
+      "created_price": 18.41,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "eu-below-938a30",
+      "ticker": "EU",
+      "condition": {
+        "op": "below",
+        "threshold": 1.3
+      },
+      "note": "EU T1 $1.30 (-15%) - 微盘股+高风险高弹性ISR",
+      "created": "2026-05-17",
+      "created_price": 1.52,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "eu-below-5a5f1c",
+      "ticker": "EU",
+      "condition": {
+        "op": "below",
+        "threshold": 1.1
+      },
+      "note": "EU T2 $1.10 (-28%) - 微盘股极小仓位",
+      "created": "2026-05-17",
+      "created_price": 1.52,
+      "active": true,
+      "fired": false
     }
   ]
 }
