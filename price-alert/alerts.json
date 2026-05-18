@@ -1001,6 +1001,45 @@
       "created_price": 1.52,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "hubs-below-73df5e",
+      "ticker": "HUBS",
+      "condition": {
+        "op": "below",
+        "threshold": 183
+      },
+      "note": "HUBS T1 $183 (-8%) - 跟随CEO+创始人+主席cluster买入 (5/12)",
+      "created": "2026-05-18",
+      "created_price": 198.38,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "hubs-below-99aa76",
+      "ticker": "HUBS",
+      "condition": {
+        "op": "below",
+        "threshold": 173
+      },
+      "note": "HUBS T2 $173 (-13%) - 贴52W低$173.25支撑，加仓",
+      "created": "2026-05-18",
+      "created_price": 198.38,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "hubs-below-c17383",
+      "ticker": "HUBS",
+      "condition": {
+        "op": "below",
+        "threshold": 160
+      },
+      "note": "HUBS T3 $160 (-19%) - 跌穿52W低恐慌价位，最深入场",
+      "created": "2026-05-18",
+      "created_price": 198.38,
+      "active": true,
+      "fired": false
     }
   ]
 }
