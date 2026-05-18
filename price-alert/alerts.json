@@ -511,7 +511,10 @@
       "created": "2026-05-16",
       "created_price": 78.58,
       "active": true,
-      "fired": false
+      "fired": true,
+      "fired_at_utc": "2026-05-18T16:35:48.565137+00:00",
+      "fired_at_price": 73.8499984741211,
+      "fired_reason": "$73.85 \u2264 $74.00"
     },
     {
       "id": "sei-below-ba0389",
