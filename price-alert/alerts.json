@@ -133,7 +133,7 @@
       "ticker": "NOK",
       "condition": {
         "op": "below_ma_50",
-        "ma_at_check": 10.1726
+        "ma_at_check": 10.2926
       },
       "note": "NOK T2 \u52a0\u4ed3 \u2014 50DMA \u8dcc\u7834\uff08\u6df1\u5ea6\u56de\u8c03\u673a\u4f1a\uff09",
       "created": "2026-05-11",
@@ -146,7 +146,7 @@
       "ticker": "ORCL",
       "condition": {
         "op": "above_ma_200",
-        "ma_at_check": 209.60295
+        "ma_at_check": 209.26715
       },
       "note": "ORCL trend-turn \u4fe1\u53f7 \u2014 200DMA $211 \u7a81\u7834\uff08\u91cd\u65b0\u8bc4\u4f30\uff09",
       "created": "2026-05-11",
@@ -189,7 +189,7 @@
       "condition": {
         "op": "rise_intraday",
         "pct": 5,
-        "prev_close_at_check": 292.65
+        "prev_close_at_check": 266.8
       },
       "note": "POWL \u5355\u65e5\u66b4\u6da8 5%+ \u2014 \u770b\u662f\u5426\u53c8\u6709\u65b0 hyperscaler \u8ba2\u5355\u516c\u544a",
       "created": "2026-05-11",
@@ -369,7 +369,7 @@
       "condition": {
         "op": "drop_intraday",
         "pct": 5,
-        "prev_close_at_check": 200.99
+        "prev_close_at_check": 200.47
       },
       "note": "SPXC \u5355\u65e5\u66b4\u8dcc 5% \u2014 \u53ef\u80fd\u6709 peak data center \u62c5\u5fe7\u6216 tariff \u65b0\u95fb, \u7ed3\u5408 backlog \u5224\u65ad\u662f\u5426\u52a0\u4ed3\u673a\u4f1a",
       "created": "2026-05-15",
@@ -388,7 +388,10 @@
       "created": "2026-05-15",
       "created_price": 13.95,
       "active": true,
-      "fired": false
+      "fired": true,
+      "fired_at_utc": "2026-05-19T14:09:47.633291+00:00",
+      "fired_at_price": 13.3100004196167,
+      "fired_reason": "$13.31 \u2264 $13.50"
     },
     {
       "id": "vst-below-157802",
@@ -673,7 +676,10 @@
       "created": "2026-05-16",
       "created_price": 414.9,
       "active": true,
-      "fired": false
+      "fired": true,
+      "fired_at_utc": "2026-05-19T14:09:54.798414+00:00",
+      "fired_at_price": 374.3500061035156,
+      "fired_reason": "$374.35 \u2264 $375.00"
     },
     {
       "id": "mtz-below-a2ea52",
@@ -707,7 +713,7 @@
       "condition": {
         "op": "drop_intraday",
         "pct": 8,
-        "prev_close_at_check": 1049.23
+        "prev_close_at_check": 1012.25
       },
       "note": "GEV \u5355\u65e5\u66b4\u8dcc8% \u2014 \u53ef\u80fd\u89e6\u53d1\u5feb\u901f\u5165\u573a\u673a\u4f1a. \u68c0\u67e5\u662f\u5426\u6709\u57fa\u672c\u9762\u53d8\u5316\u518d\u51b3\u5b9a.",
       "created": "2026-05-16",
@@ -1064,7 +1070,10 @@
       "created": "2026-05-18",
       "created_price": 87.35,
       "active": true,
-      "fired": false
+      "fired": true,
+      "fired_at_utc": "2026-05-19T14:10:04.547907+00:00",
+      "fired_at_price": 84.79000091552734,
+      "fired_reason": "$84.79 \u2264 $85.00"
     },
     {
       "id": "gdx-below-975168",
