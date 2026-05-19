@@ -67,10 +67,10 @@ def _valuation_score(valuation: dict) -> int:
         s += 1
 
     div = valuation.get("dividend_yield")
-    # yfinance returns dividend_yield in % (e.g. 4.81 for 4.81%) for some
-    # tickers and as decimal (0.0481) for others. Normalize: > 1 means %.
+    # valuation.py now normalizes dividend_yield to ALWAYS be a fraction
+    # (e.g. 0.0481 = 4.81%). No more ambiguity.
     if div is not None:
-        div_pct = div if div >= 1 else div * 100
+        div_pct = div * 100
         if div_pct >= 3:
             s += 1
 
@@ -130,7 +130,7 @@ def compute_score(filing: dict, total_value: float,
             factors.append(f"✅ Net cash {net_pct:.0f}% of mcap")
         div = valuation.get("dividend_yield")
         if div is not None:
-            div_pct = div if div >= 1 else div * 100
+            div_pct = div * 100  # always fraction now
             if div_pct >= 3:
                 factors.append(f"✅ Dividend {div_pct:.1f}%")
 

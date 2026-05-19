@@ -74,6 +74,9 @@ def enrich(ticker: str, filing: dict, total_value: float) -> dict:
         from .price_action import pull_price_action
         from .company_info import pull_company_info
         from .score import compute_score
+        from .sector import classify_sector       # v3
+        from .pattern import detect_all_patterns  # v3
+        from .verdict import compute_verdict      # v3
     except ImportError as e:
         print(f"[ENRICH-WARN] enrichment imports failed: {e}", file=sys.stderr)
         return {}
@@ -83,11 +86,43 @@ def enrich(ticker: str, filing: dict, total_value: float) -> dict:
         price = pull_price_action(ticker)
         company = pull_company_info(ticker, valuation)
         score = compute_score(filing, total_value, valuation, price)
+
+        # v3 additions: sector → patterns → verdict (each non-fatal)
+        try:
+            sector = classify_sector(
+                ticker,
+                valuation.get("sector") if valuation else None,
+                valuation.get("industry") if valuation else None,
+            )
+        except Exception as e:
+            print(f"[ENRICH-WARN] classify_sector({ticker}) failed: {e}", file=sys.stderr)
+            sector = {}
+
+        try:
+            patterns = detect_all_patterns(
+                ticker, filing, valuation, price, sector, total_value
+            )
+        except Exception as e:
+            print(f"[ENRICH-WARN] detect_all_patterns({ticker}) failed: {e}", file=sys.stderr)
+            patterns = {}
+
+        try:
+            verdict = compute_verdict(
+                ticker, filing, valuation, price, sector, score, patterns, total_value
+            )
+        except Exception as e:
+            print(f"[ENRICH-WARN] compute_verdict({ticker}) failed: {e}", file=sys.stderr)
+            verdict = {}
+
         return {
             "valuation": valuation,
             "price": price,
             "company": company,
             "score": score,
+            "sector": sector,        # v3
+            "patterns": patterns,    # v3
+            "verdict": verdict,      # v3
+            "filing": filing,        # pass filing into formatter for buy-price check
         }
     except Exception as e:
         print(f"[ENRICH-WARN] enrich({ticker}) failed: {e}", file=sys.stderr)
