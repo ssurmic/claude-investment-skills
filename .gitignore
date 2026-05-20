@@ -44,5 +44,7 @@ venv/
 *.key
 secrets.json
 credentials.json
-# (price-alert/alerts.json is OK to commit — has no secrets, just alert config)
+# Personal data — NEVER commit (reveals tracked tickers / buy levels / front-running)
+# Personal price-action alerts live in the PRIVATE repo (invest-watchlist) only.
+price-alert/alerts.json
 # (.env.example is OK to commit — template with no real values)
