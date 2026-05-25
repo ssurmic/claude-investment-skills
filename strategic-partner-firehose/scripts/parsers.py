@@ -364,9 +364,10 @@ def extract_ticker(text: str) -> str:
     m = _RX_TICKER_INLINE.search(text)
     if m:
         candidate = m.group(1).upper()
-        # Filter common false positives (column headers, etc.)
-        # 过滤常见误识别 (表格列名等)
-        if candidate not in {"NONE", "N/A", "TICKER", "SYMBOL"}:
+        # Filter common false positives (cover-page table headers, etc.)
+        # 过滤常见误识别 — "Trading Symbol(s) Name of each exchange" 会误抓 NAME.
+        if candidate not in {"NONE", "N/A", "TICKER", "SYMBOL", "NAME", "EACH",
+                             "CLASS", "TITLE", "EXCHANGE", "COMMON", "PAR", "VALUE"}:
             return candidate
 
     return ""

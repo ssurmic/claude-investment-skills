@@ -49,6 +49,7 @@ DRY_RUN_LIMIT         Optional: cap number of filings processed (for testing)
 """
 from __future__ import annotations
 
+import html
 import json
 import os
 import re
@@ -213,9 +214,19 @@ def fetch_filing_text(index_url: str) -> str:
     if not candidates:
         return ""
 
-    # Exclude index-related links
+    # Normalize inline-XBRL viewer wrapper: modern 8-Ks link the cover page as
+    # "/ix?doc=/Archives/..." (a JS viewer shell with NO filing text). Strip the
+    # wrapper to hit the raw document, else we miss the Item numbers entirely.
+    # 现代 8-K 把封面挂在 inline-XBRL viewer (/ix?doc=) 后, 那是 JS 壳没正文,
+    # 必须剥掉拿原始文档, 否则 Item 编号全抓不到 → 漏掉真实交易.
+    candidates = [re.sub(r"^/ix\?doc=", "", c) for c in candidates]
+
+    # Keep only real filing documents (under /Archives/); drop EDGAR nav/search
+    # links and index/xsl helpers that otherwise waste our 3 fetch slots.
+    # 只保留 /Archives/ 下的真实文档, 丢掉导航/搜索链接.
     docs = [c for c in candidates
-            if "index" not in c.lower() and "/xsl" not in c.lower()]
+            if "/archives/" in c.lower()
+            and "index" not in c.lower() and "/xsl" not in c.lower()]
     if not docs:
         return ""
 
@@ -228,9 +239,11 @@ def fetch_filing_text(index_url: str) -> str:
             time.sleep(HTTP_DELAY)
             dr = requests.get(url, headers=HEADERS, timeout=30)
             if dr.ok:
-                # Strip HTML tags crudely (we only need text content for regex)
-                # 粗暴去 HTML 标签, 我们只需文本做 regex
+                # Strip tags + decode entities (&#160;/&nbsp; → space) so
+                # "Item&#160;7.01" matches the item regex.
+                # 去标签 + 解码实体, 让 "Item&#160;7.01" 能被正则命中.
                 stripped = re.sub(r"<[^>]+>", " ", dr.text)
+                stripped = html.unescape(stripped).replace("\xa0", " ")
                 stripped = re.sub(r"\s+", " ", stripped)
                 combined.append(stripped)
         except Exception as e:
@@ -238,6 +251,31 @@ def fetch_filing_text(index_url: str) -> str:
             continue
 
     return "\n".join(combined)
+
+
+# ─── CIK → ticker (authoritative fallback) ──────────────────────────────
+# Cover-page ticker parsing is brittle (XBRL tags get stripped; tables read
+# "Trading Symbol(s) Name of each exchange..."). The atom feed always carries
+# the CIK, so resolve ticker from SEC's official map as a reliable fallback.
+# 封面 ticker 解析很脆 — 用 atom feed always 带的 CIK 查 SEC 官方表兜底.
+_CIK_TICKER_CACHE: dict[str, str] = {}
+
+
+def cik_to_ticker(cik: str) -> str:
+    if not cik:
+        return ""
+    if not _CIK_TICKER_CACHE:
+        try:
+            r = requests.get("https://www.sec.gov/files/company_tickers.json",
+                             headers=HEADERS, timeout=30)
+            if r.ok:
+                for row in r.json().values():
+                    _CIK_TICKER_CACHE[str(row["cik_str"]).zfill(10)] = \
+                        str(row["ticker"]).upper()
+        except Exception as e:
+            print(f"[WARN] CIK→ticker map load failed: {e}", file=sys.stderr)
+            return ""
+    return _CIK_TICKER_CACHE.get(str(cik).zfill(10), "")
 
 
 # ─── Core analysis / 核心分析 ──────────────────────────────────────────
@@ -275,6 +313,12 @@ def analyze_filing(meta: FilingMeta, body: str) -> PartnerSignal | None:
     amount_m = extract_max_amount_usd_m(body)
     conv_price = extract_conversion_price(body)
     ticker = extract_ticker(body)
+    # For issuer-filed forms (8-K/6-K) the filer CIK IS the issuer → authoritative.
+    # Prefer it over brittle cover-page parsing (which can read "NAME"/"" from the
+    # "Trading Symbol(s) | Name of each exchange" header). NOT for 13D/13G, where
+    # the filer is the INVESTOR, not the target.
+    if meta.form_type in ("8-K", "6-K"):
+        ticker = cik_to_ticker(meta.cik) or ticker
     deal_type = detect_deal_type(body)
     company_name = ""
 
