@@ -149,11 +149,12 @@ _NOISE_PATTERNS: list[re.Pattern] = [
 class FilingMeta:
     """Metadata about a SEC filing from the EDGAR atom feed."""
     accession: str          # SEC accession number (unique ID)
-    form_type: str          # "8-K", "SC 13D", etc.
+    form_type: str          # "8-K", "SC 13D", "6-K", "Form D", etc.
     link: str               # URL to filing index page
     title: str              # "8-K - NVIDIA CORPORATION (0001045810) (Filer)"
     updated: str            # ISO timestamp
     cik: str = ""           # 10-digit CIK (extracted from title)
+    company_name: str = ""  # Filer/issuer name parsed from title
 
 
 @dataclass
@@ -213,14 +214,18 @@ def parse_atom_feed(xml_text: str) -> list[FilingMeta]:
 
         title = title_el.text or ""
 
-        # Detect form type from title (atom feeds mix multiple types if you
-        # don't constrain in URL)
-        # 从 title 推断 form type
+        # Detect form type from title (atom feeds tag each entry with its form).
+        # 从 title 推断 form type. Title format: "<FORM> - <NAME> (CIK) (role)".
+        form_prefix = title.split(" - ", 1)[0].strip().upper() if " - " in title else ""
         form_type = "8-K"
         if "13D" in title.upper():
             form_type = "SC 13D"
         elif "13G" in title.upper():
             form_type = "SC 13G"
+        elif form_prefix.startswith("6-K"):
+            form_type = "6-K"
+        elif form_prefix == "D" or form_prefix.startswith("D/A"):
+            form_type = "Form D"  # private placement / exempt offering
 
         # Extract CIK from title like "8-K - NVIDIA CORP (0001045810) (Filer)"
         # 从 title 抽取 10 位 CIK
@@ -229,6 +234,13 @@ def parse_atom_feed(xml_text: str) -> list[FilingMeta]:
         if cik_match:
             cik = cik_match.group(1)
 
+        # Extract filer/issuer name: text between "<FORM> - " and " (CIK)"
+        # 抽取申报方/发行方名字 (Form D 没 ticker, 靠名字匹配 registry)
+        company_name = ""
+        name_match = re.search(r"-\s+(.+?)\s+\(\d{10}\)", title)
+        if name_match:
+            company_name = name_match.group(1).strip()
+
         results.append(FilingMeta(
             accession=accession,
             form_type=form_type,
@@ -236,6 +248,7 @@ def parse_atom_feed(xml_text: str) -> list[FilingMeta]:
             title=title,
             updated=updated_el.text if updated_el is not None else "",
             cik=cik,
+            company_name=company_name,
         ))
 
     return results

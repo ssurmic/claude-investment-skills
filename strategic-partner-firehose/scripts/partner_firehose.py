@@ -127,6 +127,19 @@ EDGAR_FEEDS: dict[str, str] = {
         "https://www.sec.gov/cgi-bin/browse-edgar"
         "?action=getcurrent&type=SC+13D&output=atom&count=40"
     ),
+    # 6-K = foreign private issuers' "current report" (NOK/TSMC/Samsung/ASML/Arm).
+    # 外国发行人走 6-K 不走 8-K — 不加这条就漏掉所有外国票.
+    "6-K": (
+        "https://www.sec.gov/cgi-bin/browse-edgar"
+        "?action=getcurrent&type=6-K&output=atom&count=100"
+    ),
+    # Form D = private placement / exempt offering. Catches PRIVATE-company
+    # raises (OpenAI/Anthropic/xAI/neocloud) that never hit 13F or 8-K.
+    # 私司融资唯一来源 — 抓 NVDA/AMD 投的未上市公司自己报的融资.
+    "Form D": (
+        "https://www.sec.gov/cgi-bin/browse-edgar"
+        "?action=getcurrent&type=D&output=atom&count=100"
+    ),
 }
 
 USER_AGENT = os.environ.get(
@@ -304,6 +317,64 @@ def analyze_filing(meta: FilingMeta, body: str) -> PartnerSignal | None:
     )
 
 
+def fetch_form_d_amount(index_url: str) -> float:
+    """
+    Pull the offering amount (USD millions) from a Form D primary_doc.xml.
+    从 Form D 的 primary_doc.xml 拉融资金额 (单位 million).
+
+    Non-fatal: returns 0.0 on any error (alert still fires without the amount).
+    """
+    try:
+        time.sleep(HTTP_DELAY)
+        r = requests.get(index_url, headers=HEADERS, timeout=30)
+        r.raise_for_status()
+        xml_doc = re.search(r'href="([^"]+primary_doc\.xml)"', r.text)
+        if not xml_doc:
+            return 0.0
+        url = xml_doc.group(1)
+        url = url if url.startswith("http") else "https://www.sec.gov" + url
+        time.sleep(HTTP_DELAY)
+        x = requests.get(url, headers=HEADERS, timeout=30)
+        if not x.ok:
+            return 0.0
+        # totalOfferingAmount preferred; fall back to totalAmountSold
+        for tag in ("totalOfferingAmount", "totalAmountSold"):
+            m = re.search(rf"<{tag}>(\d+)</{tag}>", x.text)
+            if m:
+                return float(m.group(1)) / 1e6  # USD → millions
+    except Exception as e:
+        print(f"[WARN] Form D amount fetch failed: {e}", file=sys.stderr)
+    return 0.0
+
+
+def analyze_form_d(meta: FilingMeta) -> PartnerSignal | None:
+    """
+    Form D path — match the FILER/issuer name against the registry.
+    Form D 路径 — 用申报方名字匹配 registry (Form D 不点名投资人, 但当一个
+    我们关注的 AI 公司/neocloud 自己报融资时, 这就是 CapEx 流向的硬信号).
+
+    No ticker (these are private companies) → bypasses the mcap/US-listed filter.
+    """
+    name = meta.company_name
+    if not name:
+        return None
+    investors = find_strategic_investors(name)
+    if not investors:
+        return None  # not a name we track — skip (avoids Form D firehose noise)
+
+    amount_m = fetch_form_d_amount(meta.link)
+    return PartnerSignal(
+        ticker="",
+        company_name=name,
+        form_type="Form D",
+        investors=investors,
+        amount_usd_m=amount_m,
+        deal_type="Private Raise (Form D)",
+        filing_link=meta.link,
+        accession=meta.accession,
+    )
+
+
 # ─── Alert formatting / 推送格式化 ──────────────────────────────────────
 
 def format_alert(signal: PartnerSignal, enriched: dict | None = None) -> str:
@@ -318,6 +389,24 @@ def format_alert(signal: PartnerSignal, enriched: dict | None = None) -> str:
     price = enriched.get("price") or {}
     company = enriched.get("company") or {}
     score_data = enriched.get("score") or {}
+
+    # Form D — private-company raise (no ticker, no price/valuation enrichment).
+    # Form D 私司融资 — 单独样式, 没有 ticker/价格.
+    if signal.form_type == "Form D":
+        top_tier, top_canonical = signal.investors[0]
+        tier_emoji = TIER_EMOJI.get(top_tier, "🤝")
+        amt = (f"${signal.amount_usd_m:,.0f}M" if signal.amount_usd_m
+               else "amount n/a")
+        return "\n".join([
+            f"🔒🟢 *PRIVATE RAISE (Form D)* — {amt}",
+            "",
+            f"{tier_emoji} *{top_canonical.replace('_', ' ')}*",
+            f"_{signal.company_name}_",
+            "",
+            "_A private company we track just filed a Form D (raised money) — "
+            "follow the CapEx._",
+            f"\n[SEC EDGAR ›]({signal.filing_link})",
+        ])
 
     # v2.4: Two header styles depending on detection path
     # 两种 header 样式取决于命中路径
@@ -498,16 +587,16 @@ def main() -> int:
                 break
 
             try:
-                time.sleep(HTTP_DELAY)
-                body = fetch_filing_text(meta.link)
-                total_processed += 1
-            except Exception as e:
-                print(f"[WARN] body fetch failed {meta.accession}: {e}",
-                      file=sys.stderr)
-                continue
-
-            try:
-                signal = analyze_filing(meta, body)
+                if meta.form_type == "Form D":
+                    # Form D: match on filer name only (no body/items needed).
+                    # Skip the body fetch unless the name matches (cheap pre-filter).
+                    total_processed += 1
+                    signal = analyze_form_d(meta)
+                else:
+                    time.sleep(HTTP_DELAY)
+                    body = fetch_filing_text(meta.link)
+                    total_processed += 1
+                    signal = analyze_filing(meta, body)
             except Exception as e:
                 print(f"[WARN] analysis failed {meta.accession}: {e}",
                       file=sys.stderr)
@@ -517,9 +606,9 @@ def main() -> int:
                 total_skip_filtered += 1
                 continue
 
-            # Enrich + score
+            # Enrich + score (only when we have a ticker — Form D is private)
             enriched: dict = {}
-            if _ENRICH_AVAILABLE and enrichment_enabled():
+            if signal.ticker and _ENRICH_AVAILABLE and enrichment_enabled():
                 try:
                     valuation = pull_valuation(signal.ticker)  # type: ignore
                     price = pull_price_action(signal.ticker)  # type: ignore
@@ -559,6 +648,9 @@ def main() -> int:
                 # on same ticker. If so, send MEGA SIGNAL.
                 # 记录这次 alert + 看 insider firehose 最近是否也对该 ticker
                 # 触发过. 若是, 发 MEGA SIGNAL.
+                # Composite keys on ticker — skip for Form D (private, no ticker).
+                if not signal.ticker:
+                    continue
                 try:
                     # v2.4: handle theme-only signals (no named investor)
                     # v2.4: 处理纯题材命中的情况 (没有具名投资人)

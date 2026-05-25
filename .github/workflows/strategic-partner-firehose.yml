@@ -4,13 +4,13 @@ name: Strategic Partner Firehose (8-K + 13D Real-Time)
 # joint ventures, and strategic investments from Tier-1 names (NVIDIA, MSFT,
 # SK Telecom, Samsung, TSMC, MGX, PIF, etc.) BEFORE Twitter/Substack covers them.
 #
-# Cadence: every 60 min during US business hours + 2h after close, weekdays only.
+# Cadence: every 15 min during US business hours + 2h after close, weekdays only.
 # 8-K filings are submitted continuously through the trading day with a peak
 # right after market close (4-7pm ET).
 #
 # Cron schedule:
-#   '*/30 13-23 * * 1-5'  = every 30 min, 13:00-23:30 UTC, Mon-Fri
-#                         = 9:00 AM - 7:30 PM ET (weekdays)
+#   '*/15 13-23 * * 1-5'  = every 15 min, 13:00-23:45 UTC, Mon-Fri
+#                         = 9:00 AM - 7:45 PM ET (weekdays)
 #   Aligns with insider-firehose cadence — both fire on the same tick so
 #   composite signals can be detected within the same run.
 #
@@ -18,7 +18,7 @@ name: Strategic Partner Firehose (8-K + 13D Real-Time)
 
 on:
   schedule:
-    - cron: '*/30 13-23 * * 1-5'
+    - cron: '*/15 13-23 * * 1-5'
   workflow_dispatch:
     inputs:
       min_mcap:

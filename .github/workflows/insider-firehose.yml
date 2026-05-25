@@ -3,16 +3,16 @@ name: Insider Firehose (Form 4 Real-Time)
 # Real-time SEC Form 4 aggregator. Pulls EDGAR's "current filings" atom feed
 # and pushes a Telegram alert for each open-market insider purchase ≥ $200k.
 #
-# Cadence: every 30 min during US business hours + 2 hours after close, on
+# Cadence: every 15 min during US business hours + 2 hours after close, on
 # weekdays only. Form 4 filings are dense between 4pm-6pm ET (post-close).
 # We dedupe across runs via form4_state.json committed back to the repo.
 
 on:
   schedule:
-    # Every 30 min, 13:00 UTC to 23:30 UTC, Mon-Fri (= 9 AM - 7:30 PM EDT).
+    # Every 15 min, 13:00 UTC to 23:45 UTC, Mon-Fri (= 9 AM - 7:45 PM EDT).
     # GH Actions cron is UTC-only and minimum granularity is 1 min (often
     # coalesced to 5-15 min during peak load, which is fine for this use).
-    - cron: '*/30 13-23 * * 1-5'
+    - cron: '*/15 13-23 * * 1-5'
   workflow_dispatch:
     inputs:
       min_value:

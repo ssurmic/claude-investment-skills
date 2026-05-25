@@ -1,0 +1,70 @@
+name: Hyperscaler CapEx Monitor (AI Buildout Master Signal)
+
+# Tracks quarterly CapEx for the hyperscalers + neoclouds that fund the entire
+# AI supply chain (MSFT/GOOGL/AMZN/META/ORCL/AAPL/CRWV/NBIS). Alerts when any
+# name reports a NEW quarter (= fresh earnings) with QoQ/YoY trend, plus the
+# combined aggregate — the single highest master signal for the AI trade.
+# Accelerating = supply chain (NVDA/AVGO/VRT/COHR/ANET/MU) eats; rolling over
+# = AI trade tops.
+#
+# Cadence:
+#   - Daily after US close (catches the day a hyperscaler reports)
+#   - Weekly Monday DIGEST (full table even without a new print)
+# State dedup via committed capex_state.json (ticker -> last-seen quarter end).
+
+on:
+  schedule:
+    - cron: '0 22 * * 1-5'   # 6 PM ET weekdays — catch new earnings prints
+    - cron: '0 14 * * 1'     # Mon 10 AM ET — weekly DIGEST pulse
+  workflow_dispatch:
+    inputs:
+      digest:
+        description: 'Force full table even with no new print (1=yes)'
+        required: false
+        default: '1'
+      test_mode:
+        description: 'Print to log, do NOT send Telegram / save state'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write  # to commit capex_state.json back
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet 'requests>=2.31' 'yfinance>=0.2.40' 'pandas>=2.0'
+
+      - name: Run CapEx monitor
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Monday 14:00 UTC tick forces a digest; the daily tick does not.
+          DIGEST:    ${{ (github.event.schedule == '0 14 * * 1' || inputs.digest == '1') && '1' || '' }}
+          TEST_MODE: ${{ inputs.test_mode == 'true' && '1' || '' }}
+        run: python hyperscaler-capex/scripts/capex_monitor.py
+
+      - name: Commit updated state (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          STATE_FILE="hyperscaler-capex/scripts/capex_state.json"
+          if [[ -n "$(git status --porcelain $STATE_FILE)" ]]; then
+            git add $STATE_FILE
+            git commit -m "capex-monitor: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git pull --rebase && git push
+          else
+            echo "No state changes to commit."
+          fi

@@ -1,0 +1,61 @@
+name: PR Wire Firehose (Newsroom RSS — fastest signal)
+
+# Polls company newsrooms (NVIDIA, AMD) + GlobeNewswire for strategic-deal /
+# AI-infrastructure press releases. PR wires often hit SECONDS before the
+# matching SEC 8-K is disseminated — this is the earliest possible read on
+# "NVDA invests in X" / "AMD partners with Y" / a hyperscaler order.
+#
+# Targeted newsroom feeds are gated on AI-infra relevance (drops gaming/events);
+# broad wires fire on a tracked-investor name OR an AI keyword.
+# State dedup via committed pr_wire_state.json (5k id cap).
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 min, 24/7 (wires fire any time)
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Print to log, do NOT send Telegram / save state'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet 'requests>=2.31'
+
+      - name: Run PR wire poller
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TEST_MODE: ${{ inputs.test_mode == 'true' && '1' || '' }}
+          PR_WIRE_USER_AGENT: "ssurmiczizhao@gmail.com pr-wire-firehose/1.0 (ci)"
+        run: python pr-wire-firehose/scripts/pr_wire.py
+
+      - name: Commit updated state (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          STATE_FILE="pr-wire-firehose/scripts/pr_wire_state.json"
+          if [[ -n "$(git status --porcelain $STATE_FILE)" ]]; then
+            git add $STATE_FILE
+            git commit -m "pr-wire: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git pull --rebase && git push
+          else
+            echo "No state changes to commit."
+          fi

@@ -64,6 +64,51 @@ TIER_1: dict[str, list[str]] = {
     "Oracle": [
         "Oracle Corporation", "Oracle Corp",
     ],
+    "Broadcom": [
+        "Broadcom Inc", "Broadcom Inc.", "Broadcom Corporation",
+    ],
+    "AMD": [
+        "Advanced Micro Devices", "Advanced Micro Devices, Inc.", "AMD Inc",
+    ],
+    "Tesla": [
+        "Tesla, Inc.", "Tesla Inc",
+    ],
+
+    # ─ AI labs / 大模型实验室 (the new CapEx deployers — compute buyers) ─
+    # 这些是 AI 算力的最终买家. 一旦公开供应商 8-K 里出现它们的名字 =
+    # CapEx 资金流向该供应商的硬信号 (e.g. AMD-OpenAI warrants 8-K).
+    "OpenAI": [
+        "OpenAI", "OpenAI, Inc.", "OpenAI Global", "OpenAI OpCo",
+    ],
+    "Anthropic": [
+        "Anthropic", "Anthropic PBC", "Anthropic, PBC",
+    ],
+    "xAI": [
+        "xAI Corp", "xAI Holdings", "X.AI",  # avoid bare "xAI" — too short, false-positive prone
+    ],
+    "Mistral": [
+        "Mistral AI",
+    ],
+    "SafeSuperintelligence": [
+        "Safe Superintelligence",
+    ],
+
+    # ─ Neoclouds / GPU 云 (CapEx-heavy GPU buildout buyers) ─
+    "CoreWeave": [
+        "CoreWeave", "CoreWeave, Inc.",
+    ],
+    "Nebius": [
+        "Nebius Group", "Nebius B.V.",
+    ],
+    "Lambda": [
+        "Lambda Labs", "Lambda, Inc.",  # avoid bare "Lambda" — AWS Lambda false hits
+    ],
+    "Crusoe": [
+        "Crusoe Energy", "Crusoe Energy Systems",
+    ],
+    "TogetherAI": [
+        "Together Computer", "Together AI",
+    ],
 
     # ─ 韩国 Korean tech (PENG-style 投资来源 / PENG-style strategic sources) ─
     "SK_Telecom": [
@@ -142,9 +187,6 @@ TIER_2: dict[str, list[str]] = {
     ],
     "Workday": [
         "Workday Ventures",
-    ],
-    "AMD": [
-        "Advanced Micro Devices", "AMD Inc",
     ],
 }
 
