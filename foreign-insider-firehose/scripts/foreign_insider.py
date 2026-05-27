@@ -234,6 +234,24 @@ def fmt(ticker: str, name: str, f: dict, link: str, date: str) -> str:
     ])
 
 
+def fmt_agg(ticker: str, company: str, insider: str, tranches: list, total: float) -> str:
+    """Aggregated per-insider buy alert (sums multi-day tranches → running total)."""
+    n = len(tranches)
+    latest = tranches[-1]
+    lines = [
+        f"🟢🇪🇺 *FOREIGN INSIDER BUY — {ticker}*" + (f" · {n} tranches" if n > 1 else ""),
+        f"*{company}*",
+        f"👤 {insider}" + (f" · _{latest['position']}_" if latest.get("position") else ""),
+        f"💰 *running total ~${total:,.0f}* across {n} buy{'s' if n > 1 else ''}",
+    ]
+    if n > 1:
+        for t in tranches:
+            lines.append(f"   • {t['date']}: ~${t['value']:,.0f}")
+    lines.append(f"📅 latest {latest['date']}")
+    lines.append(f"[SEC 6-K ›]({latest['link']})")
+    return "\n".join(lines)
+
+
 def main() -> int:
     try:
         wl = json.loads(WATCHLIST_FILE.read_text())
@@ -252,27 +270,46 @@ def main() -> int:
         if not cik:
             print(f"[WARN] no CIK for {ticker}", file=sys.stderr); continue
         cik = str(cik).zfill(10)
+        # Fetch + classify all recent PDMR filings, then AGGREGATE buys per
+        # insider (so multi-day tranches sum into one running-total alert —
+        # this is why we previously undercounted Owczarek's 70k/$1.1M as 32k/$500k).
+        buys_by_insider: dict = {}
         for f6 in recent_6ks(cik):
-            if f6["accession"] in seen:
-                continue
             time.sleep(HTTP_DELAY)
-            body = fetch_text(f6["index_url"])
-            res = classify(body)
-            seen.add(f6["accession"])
+            res = classify(fetch_text(f6["index_url"]))
             if not res:
-                continue  # not a PDMR filing
+                continue
             v = res["verdict"]
-            # Fire genuine BUYs above the micro-floor; let unparseable-size buys
-            # through (value==0) with a "check filing" link rather than drop them.
-            fire = (v == "BUY" and (res["value_usd"] >= MIN_BUY_USD or res["value_usd"] == 0)) or \
-                   (v in ("MIXED", "UNVERIFIED")) or (v == "SELL" and INCLUDE_SELLS)
-            tag = "ALERT" if fire else "skip"
-            print(f"[{tag}] {ticker} {f6['date']} {v} "
-                  f"{res['names']} ${res['value_usd']:,.0f}", file=sys.stderr)
-            if fire:
-                if send_telegram(fmt(ticker, company, res, f6["index_url"], f6["date"])):
-                    alerts += 1
-                    time.sleep(0.5)
+            insider = res["names"][0] if res["names"] else "?"
+            if v == "BUY":
+                buys_by_insider.setdefault(insider, []).append({
+                    "date": f6["date"], "acc": f6["accession"], "link": f6["index_url"],
+                    "value": res["value_usd"], "position": res["position"]})
+            elif (v == "SELL" and INCLUDE_SELLS) or v in ("MIXED", "UNVERIFIED"):
+                if f6["accession"] not in seen:
+                    if send_telegram(fmt(ticker, company, res, f6["index_url"], f6["date"])):
+                        alerts += 1
+                        time.sleep(0.5)
+                seen.add(f6["accession"])
+            else:
+                seen.add(f6["accession"])  # AWARD / non-signal
+
+        # Per-insider aggregation: alert (with running total) only if a tranche is NEW.
+        for insider, tranches in buys_by_insider.items():
+            tranches.sort(key=lambda x: x["date"])
+            total = sum(t["value"] for t in tranches)
+            has_new = any(t["acc"] not in seen for t in tranches)
+            for t in tranches:
+                seen.add(t["acc"])
+            if not has_new:
+                continue
+            if total and total < MIN_BUY_USD:
+                continue
+            print(f"[ALERT-AGG] {ticker} {insider}: {len(tranches)} buys "
+                  f"total ${total:,.0f}", file=sys.stderr)
+            if send_telegram(fmt_agg(ticker, company, insider, tranches, total)):
+                alerts += 1
+                time.sleep(0.5)
 
     if not TEST_MODE:
         state["seen"] = sorted(seen)[-8000:]
