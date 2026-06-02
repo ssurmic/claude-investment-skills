@@ -1,0 +1,43 @@
+{
+  "alerts": [
+    {
+      "id": "sitm-below-b59c51",
+      "ticker": "SITM",
+      "condition": {
+        "op": "below",
+        "threshold": 620.0
+      },
+      "note": "T1 \u6280\u672f\u652f\u6491\u4e0b\u6cbf | \u4ece$186\u4f4e\u70b93.3x | AI\u65f6\u5e8f\u6545\u4e8b\u5b8c\u597d | \u8bd5\u63a2\u4ed31-2%",
+      "created": "2026-06-02",
+      "created_price": 686.2899780273438,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "sitm-below-4ab162",
+      "ticker": "SITM",
+      "condition": {
+        "op": "below",
+        "threshold": 480.0
+      },
+      "note": "T2 2025\u672b\u7a81\u7834\u533a\u56de\u8e29 | P/S ~38x | \u5b89\u5168\u8fb9\u9645\u660e\u663e | \u52a0\u4ed3\u81f35%",
+      "created": "2026-06-02",
+      "created_price": 686.2899780273438,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "sitm-below-90cf30",
+      "ticker": "SITM",
+      "condition": {
+        "op": "below",
+        "threshold": 370.0
+      },
+      "note": "T3 \u4f30\u503c\u538b\u7f29\u533a | P/S ~29x | \u718a\u5e02/AI\u9000\u6f6e\u5e95\u90e8 | \u53ef\u91cd\u4ed38-10%",
+      "created": "2026-06-02",
+      "created_price": 686.2899780273438,
+      "active": true,
+      "fired": false
+    }
+  ]
+}
