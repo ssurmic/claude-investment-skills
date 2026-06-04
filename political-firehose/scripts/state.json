@@ -15,7 +15,17 @@
       "2026-04-09|MKTX|Sale|$1,001 - $15,000",
       "2026-04-06|NTES|Purchase|$1,001 - $15,000",
       "2026-04-24|NOW|Sale|$1,001 - $15,000",
-      "2026-04-09|VLY|Sale|$1,001 - $15,000"
+      "2026-04-09|VLY|Sale|$1,001 - $15,000",
+      "2026-05-05|ABBV|Sale|$1,001 - $15,000",
+      "2026-05-05|AMD|Purchase|$1,001 - $15,000",
+      "2026-05-19|ADI|Purchase|$1,001 - $15,000",
+      "2026-05-01|FN|Purchase|$1,001 - $15,000",
+      "2026-05-22|LITE|Purchase|$1,001 - $15,000",
+      "2026-05-21|MU|Purchase|$1,001 - $15,000",
+      "2026-05-14|PANW|Purchase|$1,001 - $15,000",
+      "2026-05-07|SNDK|Purchase|$1,001 - $15,000",
+      "2026-05-15|TPH|Sale|$1,001 - $15,000",
+      "2026-05-04|TWLO|Purchase|$1,001 - $15,000"
     ]
   },
   "oge_seen": [
@@ -222,5 +232,5 @@
     "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/FED6F4F51D33882F85258C8A002C760E/$FILE/Sean-Duffy-04.23.2025-278T.pdf",
     "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/FF08033E100E1A0885258C68002C8112/$FILE/McMaster, Sean  AMENDED final278.pdf"
   ],
-  "last_run_iso": "2026-06-03T21:57:43.996121+00:00"
+  "last_run_iso": "2026-06-04T14:02:14.262019+00:00"
 }
