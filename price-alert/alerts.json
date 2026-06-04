@@ -38,6 +38,32 @@
       "created_price": 686.2899780273438,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "adea-below-cea24f",
+      "ticker": "ADEA",
+      "condition": {
+        "op": "below",
+        "threshold": 29.0
+      },
+      "note": "ADEA T1\u5165\u573a\uff1a50\u65e5\u5747\u7ebf+9\u6708 put wall\u652f\u6491\u533a\uff0cCEO\u7ee7\u4efb\u8005\u6d88\u606f\u51fa\u6765\u540e\u8bc4\u4f30\u52a0\u4ed3",
+      "created": "2026-06-04",
+      "created_price": 32.36000061035156,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "adea-below-58f2e8",
+      "ticker": "ADEA",
+      "condition": {
+        "op": "below",
+        "threshold": 25.5
+      },
+      "note": "ADEA T2\u5165\u573a\uff1aMax Pain\u91cd\u529b\u533a+\u4e3b\u8981put wall\uff0c\u82e5\u8dcc\u81f3\u6b64\u5fc5\u6709\u8d1f\u9762\u6d88\u606f\uff08CEO\u7ee7\u4efb/\u534a\u5bfc\u4f53IP\u98ce\u9669\uff09\uff0c\u9700\u91cd\u65b0\u8bc4\u4f30\u8bba\u6587\u518d\u52a0\u4ed3",
+      "created": "2026-06-04",
+      "created_price": 32.36000061035156,
+      "active": true,
+      "fired": false
     }
   ]
 }
