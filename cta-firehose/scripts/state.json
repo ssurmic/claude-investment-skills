@@ -1,0 +1,45 @@
+{
+  "SPX": {
+    "sides": {
+      "mom_1M": false,
+      "mom_3M": true,
+      "mom_6M": true,
+      "mom_12M": true,
+      "ma_20d": false,
+      "ma_50d": true,
+      "ma_100d": true,
+      "ma_200d": true
+    },
+    "price": 7386.64990234375,
+    "asof": "2026-06-09"
+  },
+  "NDX": {
+    "sides": {
+      "mom_1M": false,
+      "mom_3M": true,
+      "mom_6M": true,
+      "mom_12M": true,
+      "ma_20d": false,
+      "ma_50d": true,
+      "ma_100d": true,
+      "ma_200d": true
+    },
+    "price": 29084.5,
+    "asof": "2026-06-09"
+  },
+  "RTY": {
+    "sides": {
+      "mom_1M": true,
+      "mom_3M": true,
+      "mom_6M": true,
+      "mom_12M": true,
+      "ma_20d": true,
+      "ma_50d": true,
+      "ma_100d": true,
+      "ma_200d": true
+    },
+    "price": 2867.02001953125,
+    "asof": "2026-06-09"
+  },
+  "last_run_iso": "2026-06-11T09:21:32.608585+00:00"
+}

@@ -1,0 +1,61 @@
+name: CTA Trigger Level Firehose
+
+# Daily systematic-flow radar. Replicates sell-side CTA trend models
+# (multi-horizon momentum flips + 50DMA first-trigger zone + realized-vol
+# regime) for SPX/NDX/RTY and pushes a Telegram digest. A 🔔 TRIGGER
+# BREACHED banner is prepended when an index crosses a line vs the
+# committed state.json.
+#
+# Cadence (weekdays): 21:15 UTC (17:15 ET) — post-settle, levels for tomorrow.
+# Public data only (yfinance). Reuses TELEGRAM_* secrets.
+
+on:
+  schedule:
+    - cron: '15 21 * * 1-5'   # 17:15 ET post-close
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Print to log, do NOT send Telegram'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write   # to commit state.json back
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet 'yfinance>=0.2.40' 'numpy>=1.26'
+
+      - name: Run CTA level scan
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID_CHANNEL: ${{ secrets.TELEGRAM_CHAT_ID_CHANNEL }}
+          TEST_MODE:          ${{ inputs.test_mode == 'true' && '1' || '' }}
+        run: |
+          python cta-firehose/scripts/cta_levels.py --telegram
+
+      - name: Commit updated state (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain cta-firehose/scripts/state.json)" ]]; then
+            git add cta-firehose/scripts/state.json
+            git commit -m "cta: trigger-side checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git pull --rebase && git push
+          else
+            echo "No state changes to commit."
+          fi
