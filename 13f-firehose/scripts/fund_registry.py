@@ -15,6 +15,7 @@ Each entry:
 To verify a CIK: https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=<cik>
 """
 
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import List
 
