@@ -194,6 +194,58 @@
       "created_price": 390.3399963378906,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "lite-below-abc08e",
+      "ticker": "LITE",
+      "condition": {
+        "op": "below",
+        "threshold": 805.0
+      },
+      "note": "T1\u52a0\u4ed3\u4f4d:800\u6574\u6570+6/1\u4f4e\u70b9806\u5e73\u53f0 | \u4e701/3 | \u4e3b\u529b\u4f4d\u5728778",
+      "created": "2026-06-12",
+      "created_price": 889.5900268554688,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "lite-below-f8cad3",
+      "ticker": "LITE",
+      "condition": {
+        "op": "below",
+        "threshold": 778.0
+      },
+      "note": "T2\u4e3b\u529b\u6253\u4ed3\u4f4d:6/9\u4f4e776+4/28\u4f4e780+4/15\u4f4e800,\u4e09\u4e2a\u6708\u56db\u6b21\u9a8c\u8bc1\u7684\u9700\u6c42\u67b6 | \u6536\u76d8<750\u653e\u5f03\u6539\u7b49710",
+      "created": "2026-06-12",
+      "created_price": 889.5900268554688,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "cohr-below-811042",
+      "ticker": "COHR",
+      "condition": {
+        "op": "below",
+        "threshold": 342.0
+      },
+      "note": "T1\u52a0\u4ed3\u4f4d:50DMA341.7+5/19\u4f4e336.7+6/9\u4f4e335.5\u4e09\u91cd\u5171\u632f | 340-345\u5206\u6279 | NVIDIA $4B\u951a\u5b9a+PEG0.92\u5149\u94fe\u6700\u5408\u7406\u4f30\u503c",
+      "created": "2026-06-12",
+      "created_price": 363.5799865722656,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "cohr-below-1c7e18",
+      "ticker": "COHR",
+      "condition": {
+        "op": "below",
+        "threshold": 315.0
+      },
+      "note": "T2\u4e3b\u529b\u4f4d:5/7\u4f4e308+\u56db\u6708\u5e73\u53f0300-310 | \u6536\u76d8<290\u8bba\u70b9\u5931\u6548\u5168\u64a4",
+      "created": "2026-06-12",
+      "created_price": 363.5799865722656,
+      "active": true,
+      "fired": false
     }
   ]
 }
