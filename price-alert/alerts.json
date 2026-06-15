@@ -285,6 +285,19 @@
       "created_price": 113.12999725341797,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "enph-below-602e69",
+      "ticker": "ENPH",
+      "condition": {
+        "op": "below",
+        "threshold": 46.0
+      },
+      "note": "SST/IQ-SST\u6838\u5fc3\u6807\u7684\uff1bCEO\u516c\u5f00\u5e02\u573a\u4e70\u5165\u533a(.98/.50)\u4e0b\u65b9+50DMA\uff1b\u56de\u8e29\u53cd\u8f6c\u786e\u8ba4\u518d\u5c0f\u4ed3\u4e0a",
+      "created": "2026-06-14",
+      "created_price": 54.59000015258789,
+      "active": true,
+      "fired": false
     }
   ]
 }
