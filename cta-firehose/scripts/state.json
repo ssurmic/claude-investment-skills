@@ -1,17 +1,17 @@
 {
   "SPX": {
     "sides": {
-      "mom_1M": false,
+      "mom_1M": true,
       "mom_3M": true,
       "mom_6M": true,
       "mom_12M": true,
-      "ma_20d": false,
+      "ma_20d": true,
       "ma_50d": true,
       "ma_100d": true,
       "ma_200d": true
     },
-    "price": 7431.4599609375,
-    "asof": "2026-06-12"
+    "price": 7554.2900390625,
+    "asof": "2026-06-15"
   },
   "NDX": {
     "sides": {
@@ -19,13 +19,13 @@
       "mom_3M": true,
       "mom_6M": true,
       "mom_12M": true,
-      "ma_20d": false,
+      "ma_20d": true,
       "ma_50d": true,
       "ma_100d": true,
       "ma_200d": true
     },
-    "price": 29635.947265625,
-    "asof": "2026-06-12"
+    "price": 30543.91796875,
+    "asof": "2026-06-15"
   },
   "RTY": {
     "sides": {
@@ -38,8 +38,8 @@
       "ma_100d": true,
       "ma_200d": true
     },
-    "price": 2943.9921875,
-    "asof": "2026-06-12"
+    "price": 2965.087158203125,
+    "asof": "2026-06-15"
   },
-  "last_run_iso": "2026-06-12T21:55:00.988928+00:00"
+  "last_run_iso": "2026-06-15T22:04:57.072223+00:00"
 }
