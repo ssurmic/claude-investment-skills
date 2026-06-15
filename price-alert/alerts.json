@@ -246,6 +246,45 @@
       "created_price": 363.5799865722656,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "powi-below-f63705",
+      "ticker": "POWI",
+      "condition": {
+        "op": "below",
+        "threshold": 55.0
+      },
+      "note": "800V\u76f4\u63a5\u53d7\u76ca/PowiGaN\u8fdbNVIDIA\u4f9b\u5e94\u94fe\uff0c\u56de\u8e29200DMA\u4e70\u70b9\uff08\u5c0f\u4ed3\u8bd5\u4ed3\uff09",
+      "created": "2026-06-14",
+      "created_price": 78.37999725341797,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "veco-below-18d1e8",
+      "ticker": "VECO",
+      "condition": {
+        "op": "below",
+        "threshold": 54.0
+      },
+      "note": "HBM/\u5148\u8fdb\u5c01\u88c5(\u542bPLP panel litho)\uff0c\u56de\u8e2950DMA\u4e70\u70b9",
+      "created": "2026-06-14",
+      "created_price": 77.4800033569336,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "klic-below-33fc59",
+      "ticker": "KLIC",
+      "condition": {
+        "op": "below",
+        "threshold": 93.0
+      },
+      "note": "HBM\u6df7\u5408\u952e\u5408\u76f4\u63a5\u53d7\u76ca\uff0c\u56de\u8e2950DMA\u4e70\u70b9",
+      "created": "2026-06-14",
+      "created_price": 113.12999725341797,
+      "active": true,
+      "fired": false
     }
   ]
 }
