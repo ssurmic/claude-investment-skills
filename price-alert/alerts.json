@@ -298,6 +298,32 @@
       "created_price": 54.59000015258789,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "crcl-below-275adf",
+      "ticker": "CRCL",
+      "condition": {
+        "op": "below",
+        "threshold": 65.0
+      },
+      "note": "Circle\u5927\u5e95\u8bd5\u63a2\u4e00\u53e3\uff08\u5206\u6790\u5e08\u4f4e\u76ee\u6807/\u4ef7\u503c\u53c2\u8003\uff09\uff1b\u5148\u786e\u8ba4insider\u505c\u6b62\u629b\u552e\u518d\u4e0b\u624b",
+      "created": "2026-06-15",
+      "created_price": 83.37000274658203,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "crcl-below-c036bf",
+      "ticker": "CRCL",
+      "condition": {
+        "op": "below",
+        "threshold": 50.0
+      },
+      "note": "Circle\u4e3b\u5927\u5e95\uff0852\u5468\u4f4e/2026-02\u5e95\uff09\u91cd\u4ed3\u4f4d\uff1b\u7834\u65e0\u8d44\u4ea7\u5e95=\u63a5\u98de\u5200\uff0c\u9700capitulation+\u53cd\u8f6c+insider\u8f6c\u4e70",
+      "created": "2026-06-15",
+      "created_price": 83.37000274658203,
+      "active": true,
+      "fired": false
     }
   ]
 }
