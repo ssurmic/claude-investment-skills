@@ -324,6 +324,71 @@
       "created_price": 83.37000274658203,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "umc-below-bfaaaa",
+      "ticker": "UMC",
+      "condition": {
+        "op": "below",
+        "threshold": 16.5
+      },
+      "note": "\u5b58\u50a8/Fab\u91cd\u4f30\u00b7\u6210\u719f\u5236\u7a0bDUV\u6700\u5bf9\u53e3\uff1b\u73b0\u4ef7$23\u629b\u7269\u7ebfRSI70\uff0c\u56de\u8e2950DMA\u52a0\u4ed3\u533a",
+      "created": "2026-06-15",
+      "created_price": 23.079999923706055,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "lrcx-below-60deba",
+      "ticker": "LRCX",
+      "condition": {
+        "op": "below",
+        "threshold": 300.0
+      },
+      "note": "\u5b58\u50a8capex\u8f6c\u4ea7\u8bbe\u5907(picks&shovels)\uff1b\u73b0\u4ef7$389\u629b\u7269\u7ebf\uff0c\u56de\u8e2950DMA\u52a0\u4ed3\u533a",
+      "created": "2026-06-15",
+      "created_price": 388.9200134277344,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "wdc-below-c7f3e3",
+      "ticker": "WDC",
+      "condition": {
+        "op": "below",
+        "threshold": 480.0
+      },
+      "note": "HDD squeeze(SNDK\u5e73\u66ff)\uff1b\u73b0\u4ef7$653\u4e00\u5e7411\u500d\u629b\u7269\u7ebf\uff0c\u56de\u8e2950DMA\u624d\u78b0",
+      "created": "2026-06-15",
+      "created_price": 653.530029296875,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "stx-below-634784",
+      "ticker": "STX",
+      "condition": {
+        "op": "below",
+        "threshold": 750.0
+      },
+      "note": "HDD squeeze(SNDK\u5e73\u66ff)\uff1b\u73b0\u4ef7$1019\u629b\u7269\u7ebfRSI71\uff0c\u56de\u8e2950DMA\u52a0\u4ed3\u533a",
+      "created": "2026-06-15",
+      "created_price": 1018.7999877929688,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "tsem-below-4f6f70",
+      "ticker": "TSEM",
+      "condition": {
+        "op": "below",
+        "threshold": 245.0
+      },
+      "note": "\u7279\u6b8a/\u6210\u719f\u5236\u7a0b\u4ee3\u5de5\uff1b\u73b0\u4ef7$287\u8fd1\u9ad8\uff0c\u56de\u8e2950DMA\u52a0\u4ed3\u533a",
+      "created": "2026-06-15",
+      "created_price": 286.8599853515625,
+      "active": true,
+      "fired": false
     }
   ]
 }
