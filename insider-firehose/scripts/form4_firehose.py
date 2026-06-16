@@ -352,6 +352,24 @@ def format_alert(filing: dict, side: str = "BUY") -> str | None:
     return "\n".join(lines)
 
 
+# ─── Verdict suppression ──────────────────────────────────────────────────
+# Verdict tags to drop entirely: do NOT push to Telegram. The accession is
+# still recorded as seen (added to new_accessions before the send), so a
+# suppressed filing will not re-alert on the next cron run.
+#   AVOID = ≥3 risk flags / deep-cold sector / chasing-top (story stock).
+# The user does not want these pushed; everything else keeps the full
+# (wordy) enriched format unchanged.
+SUPPRESS_VERDICTS = {"AVOID"}
+
+
+def _verdict_tag(enriched) -> str:
+    """Safely pull the enrichment verdict tag (BUY/WATCH/AVOID/SKIP), or ''."""
+    try:
+        return ((enriched or {}).get("verdict") or {}).get("tag", "") or ""
+    except Exception:
+        return ""
+
+
 # ─── Telegram ─────────────────────────────────────────────────────────────
 def send_telegram(msg, *args, **kwargs) -> bool:
     """Delegates to _tg.send so every alert fans out to BOTH the
@@ -428,6 +446,7 @@ def main() -> int:
                       f"{filing['owner']}", file=sys.stderr)
             else:
                 msg = format_alert(filing, side="BUY")
+                enriched = None
                 # v2.1: append enrichment (P/E, score, etc.) if available + enabled
                 if msg and _ENRICH_AVAILABLE and enrichment_enabled():
                     try:
@@ -438,6 +457,12 @@ def main() -> int:
                         # Never let enrichment kill the alert
                         print(f"[ENRICH-FAIL] {filing['ticker']}: {ee}",
                               file=sys.stderr)
+                # v2.4: drop AVOID verdicts (story-stock red flags) — don't push.
+                _vtag = _verdict_tag(enriched)
+                if msg and _vtag in SUPPRESS_VERDICTS:
+                    print(f"[SUPPRESS-{_vtag}] {filing['ticker']:6s} "
+                          f"${total:>12,.0f}  {filing['owner']}", file=sys.stderr)
+                    msg = None
                 if msg and send_telegram(msg):
                     alerts_sent += 1
                     print(f"[ALERT-BUY] {filing['ticker']:6s}  ${total:>12,.0f}  "
@@ -492,6 +517,7 @@ def main() -> int:
                 sell_threshold = MIN_VALUE_USD * 5
                 if total >= sell_threshold or vip_sells:
                     msg = format_alert(filing, side="SELL")
+                    enriched = None
                     if msg and _ENRICH_AVAILABLE and enrichment_enabled():
                         try:
                             enriched = enrich(filing["ticker"], filing, total)
@@ -500,6 +526,12 @@ def main() -> int:
                         except Exception as ee:
                             print(f"[ENRICH-FAIL] {filing['ticker']}: {ee}",
                                   file=sys.stderr)
+                    # v2.4: drop AVOID verdicts — don't push.
+                    _vtag = _verdict_tag(enriched)
+                    if msg and _vtag in SUPPRESS_VERDICTS:
+                        print(f"[SUPPRESS-{_vtag}] {filing['ticker']:6s} "
+                              f"${total:>12,.0f}  (SELL)", file=sys.stderr)
+                        msg = None
                     if msg and send_telegram(msg):
                         alerts_sent += 1
                         print(f"[ALERT-SELL] {filing['ticker']:6s}  ${total:>12,.0f}",
