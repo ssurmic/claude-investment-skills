@@ -5,13 +5,13 @@
       "mom_3M": true,
       "mom_6M": true,
       "mom_12M": true,
-      "ma_20d": true,
+      "ma_20d": false,
       "ma_50d": true,
       "ma_100d": true,
       "ma_200d": true
     },
-    "price": 7511.35009765625,
-    "asof": "2026-06-16"
+    "price": 7420.10009765625,
+    "asof": "2026-06-17"
   },
   "NDX": {
     "sides": {
@@ -19,13 +19,13 @@
       "mom_3M": true,
       "mom_6M": true,
       "mom_12M": true,
-      "ma_20d": true,
+      "ma_20d": false,
       "ma_50d": true,
       "ma_100d": true,
       "ma_200d": true
     },
-    "price": 29968.12890625,
-    "asof": "2026-06-16"
+    "price": 29670.947265625,
+    "asof": "2026-06-17"
   },
   "RTY": {
     "sides": {
@@ -38,8 +38,8 @@
       "ma_100d": true,
       "ma_200d": true
     },
-    "price": 2939.194580078125,
-    "asof": "2026-06-16"
+    "price": 2917.98193359375,
+    "asof": "2026-06-17"
   },
-  "last_run_iso": "2026-06-16T22:03:24.482266+00:00"
+  "last_run_iso": "2026-06-17T21:57:15.028457+00:00"
 }
