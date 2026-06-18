@@ -660,6 +660,18 @@ def main() -> int:
                     print(f"[WARN] enrichment failed {signal.ticker}: {e}",
                           file=sys.stderr)
 
+            # v2.5: TAM-misparse guardrail — suppress implausible "deal ≫ mcap"
+            # signals (market-size/TAM numbers scraped from investor decks).
+            _score = enriched.get("score") or {}
+            if _score.get("suppress"):
+                total_skip_filtered += 1
+                print(
+                    f"[SUPPRESS-TAM] {signal.ticker:6s}  "
+                    f"{_score.get('suppress_reason', '')}",
+                    file=sys.stderr,
+                )
+                continue
+
             msg = format_alert(signal, enriched)
             if send_telegram(msg):
                 total_alerts += 1

@@ -136,6 +136,15 @@ def _investor_score(investors: list[tuple[str, str]]) -> tuple[int, list[str]]:
     return (points, factors)
 
 
+# v2.5: TAM-misparse guardrail threshold.
+# A real PIPE / strategic-investment / 13D stake amount cannot plausibly
+# exceed a company's market cap by a large multiple. When "deal" ≥ this %
+# of mcap, the amount is almost always a market-size / TAM figure scraped
+# from an investor deck (e.g. GHM "$90B radar market" → parsed as a "$90B
+# deal" = 6856% of a $1.3B mcap). Such signals are suppressed.
+TAM_MISPARSE_PCT_OF_MCAP = 500.0  # 5x mcap = impossible for a financing/stake
+
+
 def _amount_score(
     amount_usd_m: float, market_cap_usd: Optional[float],
 ) -> tuple[int, list[str]]:
@@ -296,6 +305,25 @@ def compute_partner_score(
         price.get("low_52w"),
     )
 
+    # ── TAM-misparse guardrail (v2.5) ──────────────────────────────────
+    # If the parsed "deal" is an implausible multiple of market cap, it is
+    # almost certainly a TAM/market-size number lifted from an investor deck
+    # (not a real financing/stake). Strip its points and flag for suppression.
+    suppress = False
+    suppress_reason = ""
+    _mcap = valuation.get("market_cap")
+    _amt_m = signal.get("amount_usd_m", 0.0) or 0.0
+    if _mcap and _mcap > 0 and _amt_m > 0:
+        _pct_mcap = (_amt_m * 1e6) / _mcap * 100
+        if _pct_mcap >= TAM_MISPARSE_PCT_OF_MCAP:
+            suppress = True
+            suppress_reason = (
+                f"deal=${_amt_m/1000:.0f}B = {_pct_mcap:.0f}% of mcap "
+                f"→ implausible, likely TAM/market-size misparse"
+            )
+            amt_pts = 0
+            amt_factors = [f"🚫 SUPPRESSED: {suppress_reason}"]
+
     raw = inv_pts + amt_pts + str_pts + prc_pts
     score = max(0, min(10, raw))
 
@@ -306,6 +334,8 @@ def compute_partner_score(
         "raw": raw,
         "factors": factors,
         "verdict": _verdict_for(score),
+        "suppress": suppress,
+        "suppress_reason": suppress_reason,
     }
 
 
