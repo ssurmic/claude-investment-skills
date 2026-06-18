@@ -389,6 +389,19 @@
       "created_price": 286.8599853515625,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "bwxt-below-696946",
+      "ticker": "BWXT",
+      "condition": {
+        "op": "below",
+        "threshold": 196.0
+      },
+      "note": "200DMA\u56de\u8c03\u52a0\u4ed3 \u2014 \u6d77\u519b\u6838\u53cd\u5e94\u5806\u72ec\u5bb6\u62a4\u57ce\u6cb3(\u903b\u8f91\u6700\u786c/\u62a4\u57ce\u6cb3\u6700\u9ad8)",
+      "created": "2026-06-18",
+      "created_price": 205.36000061035156,
+      "active": true,
+      "fired": false
     }
   ]
 }
