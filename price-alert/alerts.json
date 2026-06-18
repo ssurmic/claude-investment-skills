@@ -402,6 +402,32 @@
       "created_price": 205.36000061035156,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "adea-below-67e84d",
+      "ticker": "ADEA",
+      "condition": {
+        "op": "below",
+        "threshold": 29.6
+      },
+      "note": "ADEA 50\u65e5\u7ebf\u56de\u8c03\u52a0\u4ed3 \u2014 AI/\u534a\u5bfc\u4f53IP(\u6df7\u5408\u952e\u5408)\u6536\u79df,\u522b\u5728\u8d34\u9876$32\u8ffd",
+      "created": "2026-06-18",
+      "created_price": 31.899999618530273,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "adea-below-4cb543",
+      "ticker": "ADEA",
+      "condition": {
+        "op": "below",
+        "threshold": 27.0
+      },
+      "note": "ADEA \u6df1\u56de\u8c03\u52a0\u4ed3\u4f4d(60\u65e5\u4f4e$22.5\u4e0a\u65b9) \u2014 \u7b49\u53f3\u4fa7\u4f01\u7a33",
+      "created": "2026-06-18",
+      "created_price": 31.899999618530273,
+      "active": true,
+      "fired": false
     }
   ]
 }
